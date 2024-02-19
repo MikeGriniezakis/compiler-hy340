@@ -1,4 +1,65 @@
-23   5.5
-myvariable
-32s
+if (x == 10) {
+    return true;
+} else {
+    return false;
+}
+
+while (x < 100) {
+    x = x + 1;
+}
+
+for (i = 0; i < 10; i++) {
+    local  i;
+    continue;
+    break;
+}
+
+function add(x, y) {
+    return x + y;
+}
+
+break
+continue
+and x y
+or x y
+not x
+local x = 10
+true
+false
+nil
+12345
+123.45
+"this is a string"
+identifier
+==
+!=
+++
+--
+=
++
+-
+*
+/
+%
+>=
+<=
+>
+<
+{
+}
+(
+)
+[
+]
+;
+,
+..
+.
+::
+:
+/* This is a block comment */
+// This is a line comment
+
 "Hello\nExample"
+"String with escape characters: \t \n \r \\ \" \'"
+"String with unicode characters: \u00A9 \u00AE \u2122"

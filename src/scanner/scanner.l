@@ -55,22 +55,108 @@ void add_token(const char *type, const char *content, unsigned int numline) {
 %option noyywrap
 %option yylineno
 
-IF          "if"
-INTCONST    [0-9]+
-REALCONST   [0-9]+\.[0-9]+
-STRING      \"[^\"]*\"
-IDENT       [a-zA-Z][a-zA-Z0-9]*
+IF            "if"
+ELSE          "else"
+WHILE         "while"
+FOR           "for"
+FUNCTION      "function"
+RETURN        "return"
+BREAK         "break"
+CONTINUE      "continue"
+AND           "and"
+OR            "or"
+NOT           "not"
+LOCAL         "local"
+TRUE          "true"
+FALSE         "false"
+NIL           "nil"
+INTCONST      [0-9]+
+REALCONST     [0-9]+\.[0-9]+
+STRING        \"([^"\\\n]*(\\.[^"\\\n]*)*)\"
+IDENT         [a-zA-Z0-9_]*
+EQUAL         "=="
+DIFF          "!="
+INC           "++"
+DEC           "--"
+ASSIGN        "="
+PLUS          "+"
+MINUS         "-"
+MULT          "*"
+DIV           "/"
+MOD           "%"
+GE            ">="
+LE            "<="
+GT            ">"
+LT            "<"
+CURLY_OPEN    "{"
+CURLY_CLOSE   "}"
+PAREN_OPEN    "("
+PAREN_CLOSE   ")"
+BRACKET_OPEN  "["
+BRACKET_CLOSE "]"
+SEMICOLON     ";"
+COMMA         ","
+DOUBLE_DOT    ".."
+DOT           "."
+NAMESPACE     "::"
+COLON         ":"
+BLOCK_COMMENT "/*"(.|\n)*?"*/"
+LINE_COMMENT  "//".*
 
 WS          [ \t\n]
 
 %%
 
-{IF}         { add_token("IF", yytext, yylineno); }
-{INTCONST}   { add_token("INTCONST", yytext, yylineno); }
-{REALCONST}  { add_token("REALCONST", yytext, yylineno); }
-{STRING}     { add_token("STRING", yytext, yylineno); }
-{IDENT}      { add_token("IDENT", yytext, yylineno); }
-{WS}         {}
+{IF}            { add_token("IF", yytext, yylineno); }
+{ELSE}          { add_token("ELSE", yytext, yylineno); }
+{WHILE}         { add_token("WHILE", yytext, yylineno); }
+{FOR}           { add_token("FOR", yytext, yylineno); }
+{FUNCTION}      { add_token("FUNCTION", yytext, yylineno); }
+{RETURN}        { add_token("RETURN", yytext, yylineno); }
+{BREAK}         { add_token("BREAK", yytext, yylineno); }
+{CONTINUE}      { add_token("CONTINUE", yytext, yylineno); }
+{AND}           { add_token("AND", yytext, yylineno); }
+{OR}            { add_token("OR", yytext, yylineno); }
+{NOT}           { add_token("NOT", yytext, yylineno); }
+{LOCAL}         { add_token("LOCAL", yytext, yylineno); }
+{TRUE}          { add_token("TRUE", yytext, yylineno); }
+{FALSE}         { add_token("FALSE", yytext, yylineno); }
+{NIL}           { add_token("NIL", yytext, yylineno); }
+{INTCONST}      { add_token("INTCONST", yytext, yylineno); }
+{REALCONST}     { add_token("REALCONST", yytext, yylineno); }
+{STRING}        { add_token("STRING", yytext, yylineno); }
+{IDENT}         { add_token("IDENT", yytext, yylineno); }
+{EQUAL}         { add_token("EQUAL", yytext, yylineno); }
+{DIFF}          { add_token("DIFF", yytext, yylineno); }
+{INC}           { add_token("INC", yytext, yylineno); }
+{DEC}           { add_token("DEC", yytext, yylineno); }
+{ASSIGN}        { add_token("ASSIGN", yytext, yylineno); }
+{PLUS}          { add_token("PLUS", yytext, yylineno); }
+{MINUS}         { add_token("MINUS", yytext, yylineno); }
+{MULT}          { add_token("MULT", yytext, yylineno); }
+{DIV}           { add_token("DIV", yytext, yylineno); }
+{MOD}           { add_token("MOD", yytext, yylineno); }
+{GE}            { add_token("GE", yytext, yylineno); }
+{LE}            { add_token("LE", yytext, yylineno); }
+{GT}            { add_token("GT", yytext, yylineno); }
+{LT}            { add_token("LT", yytext, yylineno); }
+{CURLY_OPEN}    { add_token("CURLY_OPEN", yytext, yylineno); }
+{CURLY_CLOSE}   { add_token("CURLY_CLOSE", yytext, yylineno); }
+{PAREN_OPEN}    { add_token("PAREN_OPEN", yytext, yylineno); }
+{PAREN_CLOSE}   { add_token("PAREN_CLOSE", yytext, yylineno); }
+{BRACKET_OPEN}  { add_token("BRACKET_OPEN", yytext, yylineno); }
+{BRACKET_CLOSE} { add_token("BRACKET_CLOSE", yytext, yylineno); }
+{SEMICOLON}     { add_token("SEMICOLON", yytext, yylineno); }
+{COMMA}         { add_token("COMMA", yytext, yylineno); }
+{DOUBLE_DOT}    { add_token("DOUBLE_DOT", yytext, yylineno); }
+{DOT}           { add_token("DOT", yytext, yylineno); }
+{NAMESPACE}     { add_token("NAMESPACE", yytext, yylineno); }
+{COLON}         { add_token("COLON", yytext, yylineno); }
+{LINE_COMMENT}  { add_token("LINE_COMMENT", yytext, yylineno); }
+{BLOCK_COMMENT} { add_token("BLOCK_COMMENT", yytext, yylineno); }
+{WS}            {}
+
+.               { printf("Error: unexpected character '%s' at line %d\n", yytext, yylineno); }
 %%
 
 int main(int argc, char **argv) {
