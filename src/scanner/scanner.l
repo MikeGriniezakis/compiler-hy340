@@ -13,6 +13,7 @@ typedef struct {
 } alpha_token_t;
 
 unsigned int token_count = 1;
+int nested_comments_count = 0;
 
 std::vector<alpha_token_t> tokens;
 
@@ -54,6 +55,8 @@ void add_token(const char *type, const char *content, unsigned int numline) {
 
 %option noyywrap
 %option yylineno
+
+%x BLOCK_COMMENT
 
 IF            "if"
 ELSE          "else"
@@ -100,8 +103,8 @@ DOUBLE_DOT    ".."
 DOT           "."
 NAMESPACE     "::"
 COLON         ":"
-BLOCK_COMMENT "/*"(.|\n)*?"*/"
 LINE_COMMENT  "//".*
+START_BLOCK   "/*"
 
 WS          [ \t\n]
 
@@ -153,8 +156,25 @@ WS          [ \t\n]
 {NAMESPACE}     { add_token("NAMESPACE", yytext, yylineno); }
 {COLON}         { add_token("COLON", yytext, yylineno); }
 {LINE_COMMENT}  { add_token("LINE_COMMENT", yytext, yylineno); }
-{BLOCK_COMMENT} { add_token("BLOCK_COMMENT", yytext, yylineno); }
+{START_BLOCK}   { nested_comments_count = 1; BEGIN(BLOCK_COMMENT); }
 {WS}            {}
+
+<BLOCK_COMMENT>"/*" {
+    ++nested_comments_count;
+}
+<BLOCK_COMMENT>"*/" {
+    if (--nested_comments_count == 0) {
+        BEGIN(INITIAL);
+    }
+}
+<BLOCK_COMMENT>. {}
+
+<<EOF>> {
+    if (nested_comments_count > 0) {
+        printf("Error: unclosed block comment\n");
+        return 1;
+    }
+}
 
 .               { printf("Error: unexpected character '%s' at line %d\n", yytext, yylineno); }
 %%
