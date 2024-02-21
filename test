@@ -1,5 +1,6 @@
 if (x == 10) {
-/* This is a block comment /* */
+/* This is a block comment /**/ /*
+*/
     return true;
 } else {
     return false;

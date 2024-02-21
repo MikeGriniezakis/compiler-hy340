@@ -161,15 +161,16 @@ WS          [ \t\n]
 
 <BLOCK_COMMENT>"/*" {
     ++nested_comments_count;
+    BEGIN(BLOCK_COMMENT);
 }
 <BLOCK_COMMENT>"*/" {
     if (--nested_comments_count == 0) {
         BEGIN(INITIAL);
     }
 }
-<BLOCK_COMMENT>. {}
+<BLOCK_COMMENT>[/*]|[^*/] {}
 
-<<EOF>> {
+<BLOCK_COMMENT><<EOF>> {
     if (nested_comments_count > 0) {
         printf("Error: unclosed block comment\n");
         return 1;
