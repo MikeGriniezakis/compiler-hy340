@@ -34,6 +34,8 @@ const char* get_token_repr(alpha_token_t token) {
 }
 
 void print_string(alpha_token_t token) {
+    std::vector<std::string> invalid_chars;
+
     printf("%d: #%d ", token.numline, token.numToken);
     for (int i = 0; i < strlen(token.content); i++) {
         if (token.content[i] == '\\') {
@@ -53,7 +55,8 @@ void print_string(alpha_token_t token) {
                 } else if (token.content[i + 1] == '\'') {
                     printf("\'");
                 } else {
-                    printf("%c", token.content[i]);
+                    invalid_chars.push_back("\\" + std::string(1, token.content[i+1]));
+                    printf("\\%c", token.content[i+1]);
                 }
             }
         } else if (i > 0) {
@@ -65,6 +68,15 @@ void print_string(alpha_token_t token) {
         }
     }
     printf(" STRING <- char*\n");
+
+    if (invalid_chars.size() > 0) {
+        printf("\nWARNING: invalid escape sequences in string at line %d\n", token.numline);
+        printf("Invalid escape sequences: ");
+        for (auto c : invalid_chars) {
+            printf("%s ", c.c_str());
+        }
+        printf("\n");
+    }
 }
 
 void print_tokens() {
