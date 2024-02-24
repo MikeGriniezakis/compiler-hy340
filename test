@@ -62,5 +62,4 @@ identifier
 // This is a line comment
 /* This is a block comment */
 "Hello\nExample"
-"String with escape characters: \t \n \r \\ \" \'"
-"String with unicode characters: \u00A9 \u00AE \u2122"
+"String with escape characters: \" \' \n \t test \" \\ \" \'"

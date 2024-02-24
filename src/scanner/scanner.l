@@ -46,12 +46,20 @@ void print_string(alpha_token_t token) {
                     printf("\n");
                 } else if (token.content[i + 1] == 't') {
                     printf("\t");
+                } else if (token.content[i + 1] == '\\') {
+                    printf("\\");
+                } else if (token.content[i + 1] == '\"') {
+                    printf("\"");
+                } else if (token.content[i + 1] == '\'') {
+                    printf("\'");
                 } else {
                     printf("%c", token.content[i]);
                 }
             }
-        } else if (i > 0 && token.content[i - 1] != '\\') {
-            printf("%c", token.content[i]);
+        } else if (i > 0) {
+            if (token.content[i - 1] != '\\' || (token.content[i - 1] == '\\' && token.content[i - 2] == '\\')) {
+                printf("%c", token.content[i]);
+            }
         } else if (i == 0) {
             printf("%c", token.content[i]);
         }
