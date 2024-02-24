@@ -1,6 +1,4 @@
 if (x == 10) {
-/* This is a block comment /**/ /*
-*/
     return true;
 } else {
     return false;
@@ -9,6 +7,8 @@ if (x == 10) {
 while (x < 100) {
     x = x + 1;
 }
+
+my_variable = "test";
 
 for (i = 0; i < 10; i++) {
     local  i;
@@ -31,7 +31,7 @@ false
 nil
 12345
 123.45
-"this is a string"
+"this is a \n\n \t string"
 identifier
 ==
 !=
@@ -60,7 +60,7 @@ identifier
 ::
 :
 // This is a line comment
-
+/* This is a block comment */
 "Hello\nExample"
 "String with escape characters: \t \n \r \\ \" \'"
 "String with unicode characters: \u00A9 \u00AE \u2122"

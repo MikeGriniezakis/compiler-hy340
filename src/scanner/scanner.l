@@ -10,10 +10,14 @@ typedef struct {
   unsigned int numToken;
   char *content;
   char *type;
+  char *repr_type;
 } alpha_token_t;
 
 unsigned int token_count = 1;
-int nested_comments_count = 0;
+unsigned int nested_comments_count = 0;
+
+unsigned int block_comment_start = 0;
+unsigned int block_comment_end = 0;
 
 std::vector<alpha_token_t> tokens;
 
@@ -22,32 +26,59 @@ const char* get_token_repr(alpha_token_t token) {
 
     if (strcmp(token.type, "IDENT") == 0) {
         ss << "\"" << token.content << "\" <- char*";
-    } else if (strcmp(token.type, "STRING") == 0) {
-        ss << "" << token.content << " <- char*";
-    } else if (strcmp(token.type, "INTCONST") == 0) {
-        ss << token.content << " <- integer";
-    } else if (strcmp(token.type, "REALCONST") == 0) {
-        ss << token.content << " <- float";
+    } else {
+        ss << "\"" << token.content << "\" <- " << token.repr_type;
     }
 
     return strdup(ss.str().c_str());
+}
+
+void print_string(alpha_token_t token) {
+    printf("%d: #%d ", token.numline, token.numToken);
+    for (int i = 0; i < strlen(token.content); i++) {
+        if (token.content[i] == '\\') {
+            if (i > 0 && token.content[i - 1] == '\\') {
+                continue;
+            }
+
+            if (i < strlen(token.content) - 1) {
+                if (token.content[i + 1] == 'n') {
+                    printf("\n");
+                } else if (token.content[i + 1] == 't') {
+                    printf("\t");
+                } else {
+                    printf("%c", token.content[i]);
+                }
+            }
+        } else if (i > 0 && token.content[i - 1] != '\\') {
+            printf("%c", token.content[i]);
+        } else if (i == 0) {
+            printf("%c", token.content[i]);
+        }
+    }
+    printf(" STRING <- char*\n");
 }
 
 void print_tokens() {
     printf("---------- Lexical Analysis ----------\n");
 
     for (auto token : tokens) {
-        printf("%d: #%d \"%s\" %s %s\n", token.numline, token.numToken, token.content, token.type, get_token_repr(token));
+        if (strcmp(token.type, "STRING") == 0) {
+            print_string(token);
+        } else {
+            printf("%d: #%d \"%s\" %s %s\n", token.numline, token.numToken, token.content, token.type, get_token_repr(token));
+        }
     }
 }
 
-void add_token(const char *type, const char *content, unsigned int numline) {
+void add_token(const char *type, const char *content, unsigned int numline, const char *repr_type = "enumerated") {
     alpha_token_t token;
 
     token.numline = numline;
     token.numToken = token_count++;
-    token.content = strdup(content);
+    token.content = content != NULL ? strdup(content) : nullptr;
     token.type = strdup(type);
+    token.repr_type = strdup(repr_type);
 
     tokens.push_back(token);
 }
@@ -125,10 +156,10 @@ WS          [ \t\n]
 {TRUE}          { add_token("TRUE", yytext, yylineno); }
 {FALSE}         { add_token("FALSE", yytext, yylineno); }
 {NIL}           { add_token("NIL", yytext, yylineno); }
-{INTCONST}      { add_token("INTCONST", yytext, yylineno); }
-{REALCONST}     { add_token("REALCONST", yytext, yylineno); }
-{STRING}        { add_token("STRING", yytext, yylineno); }
-{IDENT}         { add_token("IDENT", yytext, yylineno); }
+{INTCONST}      { add_token("INTCONST", yytext, yylineno, "int"); }
+{REALCONST}     { add_token("REALCONST", yytext, yylineno, "float"); }
+{STRING}        { add_token("STRING", yytext, yylineno, "char*"); }
+{IDENT}         { add_token("IDENT", yytext, yylineno, "char*"); }
 {EQUAL}         { add_token("EQUAL", yytext, yylineno); }
 {DIFF}          { add_token("DIFF", yytext, yylineno); }
 {INC}           { add_token("INC", yytext, yylineno); }
@@ -155,8 +186,8 @@ WS          [ \t\n]
 {DOT}           { add_token("DOT", yytext, yylineno); }
 {NAMESPACE}     { add_token("NAMESPACE", yytext, yylineno); }
 {COLON}         { add_token("COLON", yytext, yylineno); }
-{LINE_COMMENT}  { add_token("LINE_COMMENT", yytext, yylineno); }
-{START_BLOCK}   { nested_comments_count = 1; BEGIN(BLOCK_COMMENT); }
+{LINE_COMMENT}  { add_token("LINE_COMMENT", "", yylineno); }
+{START_BLOCK}   { nested_comments_count = 1; block_comment_start = yylineno; BEGIN(BLOCK_COMMENT); }
 {WS}            {}
 
 <BLOCK_COMMENT>"/*" {
@@ -165,6 +196,10 @@ WS          [ \t\n]
 }
 <BLOCK_COMMENT>"*/" {
     if (--nested_comments_count == 0) {
+        block_comment_end = yylineno;
+        std::stringstream ss{""};
+        ss << block_comment_start << " - " << block_comment_end;
+        add_token("BLOCK_COMMENT", ss.str().c_str(), yylineno);
         BEGIN(INITIAL);
     }
 }
