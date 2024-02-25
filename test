@@ -8,7 +8,7 @@ while (x < 100) {
     x = x + 1;
 }
 
-my_variable = "test";
+local my_variable = "test";
 
 for (i = 0; i < 10; i++) {
     local  i;
