@@ -126,8 +126,8 @@ FALSE         "false"
 NIL           "nil"
 INTCONST      [0-9]+
 REALCONST     [0-9]+\.[0-9]+
-STRING        \"([^"\\\n]*(\\.[^"\\\n]*)*)\"
-IDENT         [a-zA-Z0-9_]*
+STRING        \"([^"\\]*(\\.[^"\\]*)*)\"
+IDENT         [a-zA-Z0-9][a-zA-Z0-9_]*
 EQUAL         "=="
 DIFF          "!="
 INC           "++"

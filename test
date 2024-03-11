@@ -20,6 +20,10 @@ function add(x, y) {
     return x + y;
 }
 
+"string with ascii space
+and new line"
+
+_ident
 break
 continue
 and x y
