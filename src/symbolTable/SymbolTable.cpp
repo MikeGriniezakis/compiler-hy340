@@ -4,6 +4,8 @@
 
 #include "SymbolTable.h"
 
+#include <utility>
+
 SymbolTable::SymbolTable() {
     // add scope for global variables
     this->scopes.emplace_back();
@@ -12,24 +14,8 @@ SymbolTable::SymbolTable() {
 }
 
 void SymbolTable::initializeSTDFunctions() {
-    std::string libraryFunctions[] = {
-        "print",
-        "input",
-        "objectmemberkeys",
-        "objecttotalkeys",
-        "objectcopy",
-        "totalarguments",
-        "argument",
-        "typeof",
-        "strtonum",
-        "sqrt",
-        "cos",
-        "sin"
-    };
-
-    for (const auto &functionName : libraryFunctions) {
-        Symbol symbol(functionName, 0, 0, LIBFUNC, {});
-        insertSymbol(symbol);
+    for (const auto &functionName : this->libraryFunctions) {
+        insertSymbol(functionName, 0, LIBFUNC, {});
     }
 }
 
@@ -49,23 +35,49 @@ void SymbolTable::decScope() {
     this->deactivateSymbols(this->scope);
 }
 
-void SymbolTable::insertSymbol(Symbol symbol) {
-    this->symbolTable[symbol.getName()].push_back(symbol);
+Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, std::vector<Symbol> arguments) {
+    SymbolType type;
+    if (isFunction) {
+        bool foundLib = false;
+        for (auto &func : this->libraryFunctions) {
+            if (name.compare(func) == 0) {
+                type = LIBFUNC;
+                foundLib = true;
+                break;
+            }
+        }
+
+        printf("FOUND LIB FUNC %d\n", foundLib);
+        if (foundLib == false) {
+            type = USERFUNC;
+        }
+    } else {
+        if (this->scope == 0) {
+            type = GLOBAL;
+        } else {
+            type = SCOPED;
+        }
+    }
+    auto* symbol = new Symbol(std::move(name), this->scope, line, type, std::move(arguments));
+
+    this->symbolTable[symbol->getName()].push_back(symbol);
     this->scopes.at(this->scope).push_back(symbol);
+
+    return symbol;
 }
 
 void SymbolTable::deactivateSymbols(const uint scope) {
     for (auto &symbol : this->scopes.at(scope)) {
-        symbol.setActive(false);
+        symbol->setActive(false);
     }
 }
 
 void SymbolTable::printSymbolTable() {
     for (int i = 0; i < this->scopes.size(); i++) {
-        printf("----------    Scope %d    ----------\n\n", i);
+        printf("----------    Scope #%d    ----------\n\n", i);
 
         for (auto &symbol : this->scopes.at(i)) {
-            symbol.print();
+            symbol->print();
         }
     }
 }
@@ -76,8 +88,8 @@ Symbol* SymbolTable::lookupSymbol(const std::string& name) {
     }
 
     for (auto &symbol : this->symbolTable[name]) {
-        if (symbol.isActive()) {
-            return &symbol;
+        if (symbol->isActive()) {
+            return symbol;
         }
     }
 

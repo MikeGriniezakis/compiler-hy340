@@ -11,6 +11,14 @@ enum SymbolType {
     LIBFUNC
 };
 
+struct SymbolStruct {
+    char* name;
+    int scope;
+    int line;
+    SymbolType type;
+    SymbolStruct* arguments[];
+};
+
 class Symbol {
     std::string name;
     const uint scope;
@@ -27,6 +35,8 @@ public:
     arguments(std::move(arguments)) {
         this->active = true;
     }
+
+    SymbolStruct* toStruct();
 
     std::string getName();
     bool isActive() const;

@@ -1,7 +1,6 @@
 %{
     #include <stdio.h>
     #include <src/symbolTable/SymbolTable.h>
-    #include <src/parser/parser.h>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -11,6 +10,7 @@
     extern FILE* yyin;
 
     SymbolTable* symbolTable = new SymbolTable();
+    bool isFunction = false;
 %}
 
 %define parse.error verbose
@@ -24,6 +24,7 @@
     char*   stringValue;
     double  doubleValue;
     bool    boolValue;
+    struct SymbolStruct* symbol;
 }
 
 %token <stringValue> ID
@@ -41,6 +42,8 @@
 %left PLUS MINUS MULT DIV
 %nonassoc UMINUS
 %left PAREN_OPEN PAREN_CLOSE
+
+%type <symbol> lvalue
 
 %%
 
@@ -60,7 +63,7 @@ stmt:
     | BREAK SEMICOLON
     | CONTINUE SEMICOLON
     | block
-    | funcdef
+    | funcdef { isFunction = true; }
     ;
 
 expr:
@@ -114,7 +117,17 @@ const:
     ;
 
 lvalue:
-    ID
+    ID {
+        Symbol* symbol = symbolTable->lookupSymbol($1);
+
+        if (symbol == nullptr) {
+            symbol = symbolTable->insertSymbol($1, yylineno, isFunction, {});
+            isFunction = false;
+        }
+
+        struct SymbolStruct* symbolStruct = symbol->toStruct();
+        $$ = symbolStruct;
+    }
     | LOCAL ID
     | NAMESPACE ID
     | member
@@ -166,7 +179,7 @@ indexedelem:
     ;
 
 block:
-    CURLY_OPEN stmts CURLY_CLOSE
+    CURLY_OPEN { symbolTable->incScope(); } stmts CURLY_CLOSE { symbolTable->decScope(); }
     ;
 
 funcdef:
@@ -215,7 +228,7 @@ int main(int argc, char** argv) {
     }
     yyparse();
 
-    // symbolTable->printSymbolTable();
+    symbolTable->printSymbolTable();
 
     return 0;
 }

@@ -7,8 +7,22 @@
 
 class SymbolTable {
     uint scope = 0;
-    std::map<std::string, std::vector<Symbol>> symbolTable;
-    std::vector<std::vector<Symbol>> scopes;
+    std::map<std::string, std::vector<Symbol*>> symbolTable;
+    std::vector<std::vector<Symbol*>> scopes;
+    std::string libraryFunctions[12] = {
+        "print",
+        "input",
+        "objectmemberkeys",
+        "objecttotalkeys",
+        "objectcopy",
+        "totalarguments",
+        "argument",
+        "typeof",
+        "strtonum",
+        "sqrt",
+        "cos",
+        "sin"
+    };
 
     void initializeSTDFunctions();
 public:
@@ -18,7 +32,7 @@ public:
     void decScope();
 
     void printSymbolTable();
-    void insertSymbol(Symbol symbol);
+    Symbol* insertSymbol(std::string name, uint line, bool isFunction, std::vector<Symbol> arguments);
     Symbol* lookupSymbol(const std::string& name);
     void deactivateSymbols(uint scope);
 };

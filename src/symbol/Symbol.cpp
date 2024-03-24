@@ -35,3 +35,14 @@ void Symbol::print() {
 
     printf("\"%s\" %s (line %u) (scope %u)\n", this->name.c_str(), typeString.c_str(), this->line, this->scope);
 }
+
+SymbolStruct* Symbol::toStruct() {
+    auto* symbolStruct = new SymbolStruct();
+    symbolStruct->name = const_cast<char*>(this->name.c_str());
+    symbolStruct->scope = this->scope;
+    symbolStruct->line = this->line;
+    symbolStruct->type = this->type;
+    // symbolStruct.arguments = this->arguments.data();
+
+    return symbolStruct;
+}
