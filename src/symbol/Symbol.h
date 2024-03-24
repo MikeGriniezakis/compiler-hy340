@@ -7,7 +7,6 @@
 enum SymbolType {
     GLOBAL,
     SCOPED,
-    FORMAL,
     USERFUNC,
     LIBFUNC
 };
@@ -15,24 +14,25 @@ enum SymbolType {
 class Symbol {
     std::string name;
     const uint scope;
+    const uint line;
     const SymbolType type;
     std::vector<Symbol> arguments;
     bool active;
 public:
-    Symbol(std::string name, const uint scope, const SymbolType type, std::vector<Symbol> arguments) :
+    Symbol(std::string name, const uint scope, const uint line, const SymbolType type, std::vector<Symbol> arguments) :
     name(std::move(name)),
     scope(scope),
+    line(line),
     type(type),
     arguments(std::move(arguments)) {
         this->active = true;
     }
 
     std::string getName();
-    uint getScope() const;
-    SymbolType getType();
-    std::vector<Symbol> getArguments();
     bool isActive() const;
     void setActive(bool active);
+
+    void print();
 };
 
 #endif //SYMBOL_H

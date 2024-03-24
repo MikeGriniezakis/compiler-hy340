@@ -28,7 +28,7 @@ void SymbolTable::initializeSTDFunctions() {
     };
 
     for (const auto &functionName : libraryFunctions) {
-        Symbol symbol(functionName, 0, LIBFUNC, {});
+        Symbol symbol(functionName, 0, 0, LIBFUNC, {});
         insertSymbol(symbol);
     }
 }
@@ -53,7 +53,7 @@ void SymbolTable::insertSymbol(Symbol symbol) {
     this->scopes.at(this->scope).push_back(symbol);
 }
 
-void SymbolTable::deactivateSymbols(uint scope) {
+void SymbolTable::deactivateSymbols(const uint scope) {
     for (auto &symbol : this->scopes.at(scope)) {
         symbol.setActive(false);
     }
@@ -61,10 +61,10 @@ void SymbolTable::deactivateSymbols(uint scope) {
 
 void SymbolTable::printSymbolTable() {
     for (int i = 0; i < this->scopes.size(); i++) {
-        printf("Scope %d\n", i);
+        printf("----------    Scope %d    ----------\n\n", i);
 
         for (auto &symbol : this->scopes.at(i)) {
-            printf("Name: %s, Type: %d, Active: %d\n", symbol.getName().c_str(), symbol.getType(), symbol.isActive());
+            symbol.print();
         }
     }
 }
