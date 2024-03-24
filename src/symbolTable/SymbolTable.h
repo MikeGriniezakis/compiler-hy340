@@ -1,7 +1,3 @@
-//
-// Created by mikegriniezakis on 24/3/2024.
-//
-
 #ifndef SYMBOLTABLE_H
 #define SYMBOLTABLE_H
 

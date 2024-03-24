@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 FLEX_TARGET(scanner src/scanner/scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
 BISON_TARGET(parser src/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(src/symbol src/symbolTable)
 
 add_executable(
         hy340
@@ -19,6 +19,7 @@ add_executable(
         src/symbolTable/SymbolTable.h
         src/symbol/Symbol.h
         src/symbol/Symbol.cpp
+        src/symbolTable/SymbolTable.h
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(

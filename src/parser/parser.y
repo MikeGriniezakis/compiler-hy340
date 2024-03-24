@@ -1,6 +1,6 @@
 %{
     #include <stdio.h>
-    #include "src/symbolTable/symbolTable.h"
+    #include "/home/mikegriniezakis/CLionProjects/hy340/src/symbolTable/SymbolTable.h"
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -8,6 +8,8 @@
     extern int yylineno;
     extern char* yytext;
     extern FILE* yyin;
+
+    SymbolTable* symbolTable = new SymbolTable();
 %}
 
 %define parse.error verbose
@@ -211,5 +213,8 @@ int main(int argc, char** argv) {
         }
     }
     yyparse();
+
+    symbolTable->printSymbolTable();
+
     return 0;
 }

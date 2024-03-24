@@ -1,7 +1,3 @@
-//
-// Created by mikegriniezakis on 24/3/2024.
-//
-
 #ifndef SYMBOL_H
 #define SYMBOL_H
 #include <string>
@@ -10,7 +6,7 @@
 
 enum SymbolType {
     GLOBAL,
-    LOCAL,
+    SCOPED,
     FORMAL,
     USERFUNC,
     LIBFUNC
