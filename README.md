@@ -1,13 +1,10 @@
-Sure, here's the updated README without the git cloning step:
-
-# Building the CMake Project
-
-This guide will help you build the CMake project.
+# HY340
 
 ## Prerequisites
 
-- CMake version 3.28 or higher
+- CMake version 3.18 or higher
 - Flex library
+- Bison Library
 
 ## Steps
 

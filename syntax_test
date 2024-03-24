@@ -1,0 +1,8 @@
+pi = 3;
+
+pi + 1;
+
+
+function test() {
+    return "me";
+}
