@@ -46,6 +46,7 @@ void SymbolTable::decScope() {
     }
 
     this->scope--;
+    this->deactivateSymbols(this->scope);
 }
 
 void SymbolTable::insertSymbol(Symbol symbol) {

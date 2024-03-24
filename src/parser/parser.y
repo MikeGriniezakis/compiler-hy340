@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
-    #include "/home/mikegriniezakis/CLionProjects/hy340/src/symbolTable/SymbolTable.h"
+    #include <src/symbolTable/SymbolTable.h>
+    #include <src/parser/parser.h>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -214,7 +215,7 @@ int main(int argc, char** argv) {
     }
     yyparse();
 
-    symbolTable->printSymbolTable();
+    // symbolTable->printSymbolTable();
 
     return 0;
 }
