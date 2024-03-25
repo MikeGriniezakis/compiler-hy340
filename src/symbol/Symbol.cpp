@@ -31,6 +31,9 @@ void Symbol::print() {
         case SCOPED:
             typeString = "[local variable]";
             break;
+        case FORMAL:
+            typeString = "[formal argument]";
+            break;
     }
 
     printf("\"%s\" %s (line %u) (scope %u)\n", this->name.c_str(), typeString.c_str(), this->line, this->scope);

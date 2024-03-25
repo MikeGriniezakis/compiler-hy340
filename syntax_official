@@ -8,6 +8,6 @@ function foo() {
         local foo = [{foo: [{foo: foo}]}];
         foo.foo..foo(::foo);
     }
-    x = (function(){});
+    x = (function(a, b){});
 }
 

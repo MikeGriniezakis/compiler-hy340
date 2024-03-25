@@ -92,7 +92,7 @@ assignexpr:
         Symbol* existingSymbol = symbolTable->lookupSymbolScoped($1->name);
 
         if (existingSymbol == nullptr) {
-            symbolTable->insertSymbol($1->name, $1->line, isFunction, {});
+            symbolTable->insertSymbol($1->name, $1->line, isFunction, false);
             isFunction = false;
         }
     }
@@ -199,7 +199,7 @@ funcdef:
              Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
              if (symbol == nullptr) {
-                 symbol = symbolTable->insertSymbol($3, yylineno, isFunction, {});
+                 symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false);
                  isFunction = false;
              }
      }
@@ -208,13 +208,19 @@ funcdef:
 
 idlist:
     ID {
-        SymbolStruct* symbolStruct = new SymbolStruct();
-
         Symbol* symbol = symbolTable->lookupSymbolScoped($1);
 
-        $$ = symbolStruct;
+         if (symbol == nullptr) {
+             symbol = symbolTable->insertSymbol($1, yylineno, false, true);
+         }
     }
-    | idlist COMMA ID
+    | idlist COMMA ID {
+        Symbol* symbol = symbolTable->lookupSymbolScoped($3);
+
+         if (symbol == nullptr) {
+             symbol = symbolTable->insertSymbol($3, yylineno, false, true);
+         }
+    }
     |
     ;
 
