@@ -11,6 +11,7 @@
 
     SymbolTable* symbolTable = new SymbolTable();
     bool isFunction = false;
+    bool isScopeIncreasedByFunction = false;
 %}
 
 %define parse.error verbose
@@ -65,7 +66,7 @@ stmt:
     | BREAK SEMICOLON
     | CONTINUE SEMICOLON
     | block
-    | funcdef { isFunction = true; }
+    | funcdef
     ;
 
 expr:
@@ -87,7 +88,14 @@ expr:
     ;
 
 assignexpr:
-    lvalue ASSIGN expr
+    lvalue ASSIGN expr {
+        Symbol* existingSymbol = symbolTable->lookupSymbolScoped($1->name);
+
+        if (existingSymbol == nullptr) {
+            symbolTable->insertSymbol($1->name, $1->line, isFunction, {});
+            isFunction = false;
+        }
+    }
     ;
 
 term:
@@ -120,25 +128,16 @@ const:
 
 lvalue:
     ID {
-          Symbol* symbol = symbolTable->lookupSymbolScoped($1);
-
-          if (symbol == nullptr) {
-              symbol = symbolTable->insertSymbol($1, yylineno, isFunction, {});
-              isFunction = false;
-          }
-
-          struct SymbolStruct* symbolStruct = symbol->toStruct();
-          $$ = symbolStruct;
+        SymbolStruct* symbolStruct = new SymbolStruct();
+        symbolStruct->name = $1;
+        symbolStruct->line = yylineno;
+        $$ = symbolStruct;
       }
     | LOCAL ID {
-        Symbol* symbol = symbolTable->lookupSymbolScoped($2);
-
-        if (symbol == nullptr) {
-            printf("LOCAL ID %s for line %d not found\n", $2, yylineno);
-            symbol = symbolTable->insertSymbol($2, yylineno, isFunction, {});
-            isFunction = false;
-        }
-        $$ = symbol->toStruct();
+        SymbolStruct* symbolStruct = new SymbolStruct();
+        symbolStruct->name = $2;
+        symbolStruct->line = yylineno;
+        $$ = symbolStruct;
     }
     | NAMESPACE ID
     | member
@@ -190,24 +189,31 @@ indexedelem:
     ;
 
 block:
-    CURLY_OPEN { symbolTable->incScope(); } stmts CURLY_CLOSE { symbolTable->decScope(); }
+    CURLY_OPEN { if (!isScopeIncreasedByFunction) {symbolTable->incScope();} else { isScopeIncreasedByFunction = false; } } stmts CURLY_CLOSE { symbolTable->decScope(); }
     ;
 
 funcdef:
-    FUNCTION PAREN_OPEN idlist PAREN_CLOSE block
-    | FUNCTION ID
+    FUNCTION { isFunction = true; } PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
+    | FUNCTION { isFunction = true; } ID
      {
-             Symbol* symbol = symbolTable->lookupSymbolScoped($2);
+             Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
              if (symbol == nullptr) {
-                 symbol = symbolTable->insertSymbol($2, yylineno, true, {});
+                 symbol = symbolTable->insertSymbol($3, yylineno, isFunction, {});
+                 isFunction = false;
              }
      }
-     PAREN_OPEN idlist PAREN_CLOSE block
+     PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
     ;
 
 idlist:
-    ID
+    ID {
+        SymbolStruct* symbolStruct = new SymbolStruct();
+
+        Symbol* symbol = symbolTable->lookupSymbolScoped($1);
+
+        $$ = symbolStruct;
+    }
     | idlist COMMA ID
     |
     ;
