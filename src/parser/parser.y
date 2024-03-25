@@ -44,6 +44,7 @@
 %left PAREN_OPEN PAREN_CLOSE
 
 %type <symbol> lvalue
+%type <symbol> idlist
 
 %%
 
@@ -52,6 +53,7 @@ program: stmts | ;
 stmts:
     stmt
     | stmts stmt
+    |
     ;
 
 stmt:
@@ -118,17 +120,26 @@ const:
 
 lvalue:
     ID {
-        Symbol* symbol = symbolTable->lookupSymbol($1);
+          Symbol* symbol = symbolTable->lookupSymbolScoped($1);
+
+          if (symbol == nullptr) {
+              symbol = symbolTable->insertSymbol($1, yylineno, isFunction, {});
+              isFunction = false;
+          }
+
+          struct SymbolStruct* symbolStruct = symbol->toStruct();
+          $$ = symbolStruct;
+      }
+    | LOCAL ID {
+        Symbol* symbol = symbolTable->lookupSymbolScoped($2);
 
         if (symbol == nullptr) {
-            symbol = symbolTable->insertSymbol($1, yylineno, isFunction, {});
+            printf("LOCAL ID %s for line %d not found\n", $2, yylineno);
+            symbol = symbolTable->insertSymbol($2, yylineno, isFunction, {});
             isFunction = false;
         }
-
-        struct SymbolStruct* symbolStruct = symbol->toStruct();
-        $$ = symbolStruct;
+        $$ = symbol->toStruct();
     }
-    | LOCAL ID
     | NAMESPACE ID
     | member
     ;
@@ -184,7 +195,15 @@ block:
 
 funcdef:
     FUNCTION PAREN_OPEN idlist PAREN_CLOSE block
-    | FUNCTION ID PAREN_OPEN idlist PAREN_CLOSE block
+    | FUNCTION ID
+     {
+             Symbol* symbol = symbolTable->lookupSymbolScoped($2);
+
+             if (symbol == nullptr) {
+                 symbol = symbolTable->insertSymbol($2, yylineno, true, {});
+             }
+     }
+     PAREN_OPEN idlist PAREN_CLOSE block
     ;
 
 idlist:

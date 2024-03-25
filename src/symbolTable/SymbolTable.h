@@ -34,6 +34,7 @@ public:
     void printSymbolTable();
     Symbol* insertSymbol(std::string name, uint line, bool isFunction, std::vector<Symbol> arguments);
     Symbol* lookupSymbol(const std::string& name);
+    Symbol* lookupSymbolScoped(const std::string& name);
     void deactivateSymbols(uint scope);
 };
 

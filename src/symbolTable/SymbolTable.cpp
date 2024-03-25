@@ -22,7 +22,9 @@ void SymbolTable::initializeSTDFunctions() {
 void SymbolTable::incScope() {
     this->scope++;
 
-    this->scopes.emplace_back();
+    if (this->scopes.size() == this->scope) {
+        this->scopes.emplace_back();
+    }
 }
 
 void SymbolTable::decScope() {
@@ -31,8 +33,8 @@ void SymbolTable::decScope() {
         return;
     }
 
-    this->scope--;
     this->deactivateSymbols(this->scope);
+    this->scope--;
 }
 
 Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, std::vector<Symbol> arguments) {
@@ -40,14 +42,13 @@ Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, 
     if (isFunction) {
         bool foundLib = false;
         for (auto &func : this->libraryFunctions) {
-            if (name.compare(func) == 0) {
+            if (name == func) {
                 type = LIBFUNC;
                 foundLib = true;
                 break;
             }
         }
 
-        printf("FOUND LIB FUNC %d\n", foundLib);
         if (foundLib == false) {
             type = USERFUNC;
         }
@@ -74,7 +75,7 @@ void SymbolTable::deactivateSymbols(const uint scope) {
 
 void SymbolTable::printSymbolTable() {
     for (int i = 0; i < this->scopes.size(); i++) {
-        printf("----------    Scope #%d    ----------\n\n", i);
+        printf("\n----------    Scope #%d    ----------\n", i);
 
         for (auto &symbol : this->scopes.at(i)) {
             symbol->print();
@@ -89,6 +90,16 @@ Symbol* SymbolTable::lookupSymbol(const std::string& name) {
 
     for (auto &symbol : this->symbolTable[name]) {
         if (symbol->isActive()) {
+            return symbol;
+        }
+    }
+
+    return nullptr;
+}
+
+Symbol* SymbolTable::lookupSymbolScoped(const std::string& name) {
+    for (auto &symbol : this->scopes.at(this->scope)) {
+        if (symbol->getName() == name && symbol->isActive()) {
             return symbol;
         }
     }
