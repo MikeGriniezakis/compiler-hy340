@@ -10,6 +10,11 @@
     extern FILE* yyin;
 
     SymbolTable* symbolTable = new SymbolTable();
+
+    int functionScopeCount = 0;
+    int forScopeCount = 0;
+    int whileScopeCount = 0;
+
     bool isMethodCall = false;
     bool isMemberCall = false;
     bool isFunction = false;
@@ -56,7 +61,7 @@
                 symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
                 isFunction = false;
             } else {
-                if (existingSymbol->getType() == FORMAL && existingSymbol->getScope() < (int) symbolTable->getScope()) {
+                if (existingSymbol->getScope() < (int) symbolTable->getScope()) {
                     char message[100];
                     sprintf(message, "%s not defined", symbol->name);
                     yyerror(message);
@@ -121,8 +126,16 @@ stmt:
     | whilestmt
     | forstmt
     | returnstmt
-    | BREAK SEMICOLON
-    | CONTINUE SEMICOLON
+    | BREAK {
+        if (forScopeCount == 0 && whileScopeCount == 0) {
+            yyerror("Break must be used inside a loop");
+        }
+    } SEMICOLON
+    | CONTINUE {
+        if (forScopeCount == 0 && whileScopeCount == 0) {
+            yyerror("Break must be used inside a loop");
+        }
+    } SEMICOLON
     | block
     | funcdef
     | SEMICOLON
@@ -224,7 +237,7 @@ call:
             isMethodCall = false;
         } else if (existingSymbol == nullptr) {
             char message[100];
-            sprintf(message, "Function %s not found", $1->name);
+            sprintf(message, "Function %s not defined", $1->name);
             yyerror(message);
         }
     }
@@ -269,8 +282,8 @@ block:
     ;
 
 funcdef:
-    FUNCTION PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
-    | FUNCTION { isFunction = true; } ID
+    FUNCTION { functionScopeCount++; } PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block { functionScopeCount--; }
+    | FUNCTION { functionScopeCount++; isFunction = true; } ID
      {
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
@@ -286,7 +299,7 @@ funcdef:
 
         isFunction = false;
      }
-     PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
+     PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block { functionScopeCount--; }
     ;
 
 idlist:
@@ -313,15 +326,15 @@ ifstmt:
     ;
 
 whilestmt:
-    WHILE PAREN_OPEN expr PAREN_CLOSE stmts
+    WHILE { whileScopeCount++; } PAREN_OPEN expr PAREN_CLOSE stmts { whileScopeCount--; }
     ;
 
 forstmt:
-    FOR PAREN_OPEN elist SEMICOLON expr SEMICOLON elist PAREN_CLOSE stmts
+    FOR { forScopeCount++; } PAREN_OPEN elist SEMICOLON expr SEMICOLON elist PAREN_CLOSE stmts { forScopeCount--; }
     ;
 
 returnstmt:
-    RETURN expr SEMICOLON
+    RETURN { if (functionScopeCount == 0) { yyerror("Return must be used inside a function"); } } expr SEMICOLON
     | RETURN SEMICOLON
     ;
 
