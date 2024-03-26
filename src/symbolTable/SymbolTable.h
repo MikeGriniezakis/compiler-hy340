@@ -34,7 +34,7 @@ public:
     uint getScope() const;
 
     void printSymbolTable();
-    Symbol* insertSymbol(std::string name, uint line, bool isFunction, bool isFormal);
+    Symbol* insertSymbol(std::string name, uint line, bool isFunction, bool isFormal, uint functionScope);
     Symbol* lookupSymbol(const std::string& name);
     Symbol* lookupSymbolScoped(const std::string& name);
     Symbol* lookupSymbolGlobal(const std::string& name);

@@ -15,7 +15,7 @@ SymbolTable::SymbolTable() {
 
 void SymbolTable::initializeSTDFunctions() {
     for (const auto &functionName : this->libraryFunctions) {
-        insertSymbol(functionName, 0, true, false);
+        insertSymbol(functionName, 0, true, false, 0);
     }
 }
 
@@ -43,7 +43,7 @@ void SymbolTable::decScope() {
     this->scope--;
 }
 
-Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, bool isFormal) {
+Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, bool isFormal, uint functionScope) {
     SymbolType type;
     if (isFunction) {
         bool foundLib = false;
@@ -67,7 +67,7 @@ Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, 
             type = SCOPED;
         }
     }
-    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR);
+    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR, functionScope);
 
     this->symbolTable[symbol->getName()].push_back(symbol);
     this->scopes.at(this->scope).push_back(symbol);
@@ -87,6 +87,10 @@ uint SymbolTable::getScope() const {
 
 void SymbolTable::printSymbolTable() {
     for (int i = 0; i < this->scopes.size(); i++) {
+        if (this->scopes.at(i).empty()) {
+            continue;
+        }
+
         printf("\n----------    Scope #%d    ----------\n", i);
 
         for (auto &symbol : this->scopes.at(i)) {

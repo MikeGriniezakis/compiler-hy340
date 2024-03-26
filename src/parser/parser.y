@@ -50,7 +50,7 @@
 
         if (symbol->type == SCOPED) {
             if (existingSymbol == nullptr) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
                 isFunction = false;
             }
         }
@@ -58,10 +58,10 @@
 
         if (symbol->type == ASSIGNMENT) {
             if (existingSymbol == nullptr) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
                 isFunction = false;
             } else {
-                if (existingSymbol->getScope() < (int) symbolTable->getScope() && existingSymbol->getScope() != 0 && (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)) {
+                if (existingSymbol->getScope() < (int) symbolTable->getScope() && existingSymbol->getFunctionScope() != functionScopeCount && existingSymbol->getScope() != 0 && (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)) {
                     char message[100];
                     sprintf(message, "%s not defined", symbol->name);
                     yyerror(message);
@@ -294,7 +294,7 @@ funcdef:
         }
 
         if (symbol == nullptr) {
-           symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false);
+           symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount);
         }
 
         isFunction = false;
@@ -307,14 +307,14 @@ idlist:
         Symbol* symbol = symbolTable->lookupSymbolScoped($1);
 
          if (symbol == nullptr) {
-             symbol = symbolTable->insertSymbol($1, yylineno, false, true);
+             symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount);
          }
     }
     | idlist COMMA ID {
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
          if (symbol == nullptr) {
-             symbol = symbolTable->insertSymbol($3, yylineno, false, true);
+             symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount);
          }
     }
     |

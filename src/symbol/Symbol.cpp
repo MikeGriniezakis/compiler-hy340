@@ -54,6 +54,10 @@ uint Symbol::getScope() {
     return this->scope;
 }
 
+uint Symbol::getFunctionScope() {
+    return this->function_scope;
+}
+
 SymbolType Symbol::getType() const {
     return this->type;
 }
