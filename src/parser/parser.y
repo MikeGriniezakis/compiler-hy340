@@ -61,7 +61,7 @@
                 symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
                 isFunction = false;
             } else {
-                if (existingSymbol->getScope() < (int) symbolTable->getScope()) {
+                if (existingSymbol->getScope() < (int) symbolTable->getScope() && existingSymbol->getScope() != 0 && (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)) {
                     char message[100];
                     sprintf(message, "%s not defined", symbol->name);
                     yyerror(message);

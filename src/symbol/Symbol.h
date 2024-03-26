@@ -24,16 +24,14 @@ struct SymbolStruct {
     int line;
     SymbolClass symbol_class;
     SymbolType type;
-    SymbolStruct* arguments[];
 };
 
 class Symbol {
+    bool active;
     std::string name;
     const uint scope;
     const uint line;
     const SymbolType type;
-    std::vector<Symbol> arguments;
-    bool active;
     const SymbolClass symbol_class;
 public:
     Symbol(std::string name, const uint scope, const uint line, const SymbolType type, const SymbolClass symbol_class) :

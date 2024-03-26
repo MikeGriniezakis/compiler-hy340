@@ -11,3 +11,10 @@ function foo() {
     x = (function(a, b){});
 }
 
+{
+    test = 1;
+    function test2() {
+        return test;
+    }
+}
+
