@@ -10,8 +10,66 @@
     extern FILE* yyin;
 
     SymbolTable* symbolTable = new SymbolTable();
+    bool isMethodCall = false;
+    bool isMemberCall = false;
     bool isFunction = false;
     bool isScopeIncreasedByFunction = false;
+
+    void insertToken(struct SymbolStruct* symbol, bool isArgument) {
+        Symbol* existingSymbol = nullptr;
+        if (symbol->type == GLOBAL) {
+            existingSymbol = symbolTable->lookupSymbolGlobal(symbol->name);
+        } else if (symbol->type == ASSIGNMENT) {
+            existingSymbol = symbolTable->lookupSymbol(symbol->name);
+        } else {
+            existingSymbol = symbolTable->lookupSymbolScoped(symbol->name);
+        }
+
+        if (symbol->type == GLOBAL && existingSymbol == nullptr) {
+            char message[100];
+            sprintf(message, "Global variable %s not found", symbol->name);
+            yyerror(message);
+
+            return;
+        }
+
+        if (existingSymbol == nullptr) {
+            if (symbolTable->isNameReserved(symbol->name)) {
+                char message[100];
+                sprintf(message, "Reserved name %s cannot be used", symbol->name);
+                yyerror(message);
+
+                return;
+            }
+        }
+
+        if (symbol->type == SCOPED) {
+            if (existingSymbol == nullptr) {
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
+                isFunction = false;
+            }
+        }
+
+
+        if (symbol->type == ASSIGNMENT) {
+            if (existingSymbol == nullptr) {
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false);
+                isFunction = false;
+            } else {
+                if (existingSymbol->getType() == FORMAL && existingSymbol->getScope() < (int) symbolTable->getScope()) {
+                    char message[100];
+                    sprintf(message, "%s not defined", symbol->name);
+                    yyerror(message);
+                } else if (existingSymbol->getSymbolClass() != isFunction ? FUNC : VAR && !isMemberCall && !isArgument) {
+                    char message[100];
+                    sprintf(message, "%s, %s redefined as %s", symbol->name, existingSymbol->getSymbolClass() == FUNC ? "function" : "variable", isFunction ? "function" : "variable");
+                    yyerror(message);
+                }
+
+                isMemberCall = false;
+            }
+        }
+    }
 %}
 
 %define parse.error verbose
@@ -67,6 +125,7 @@ stmt:
     | CONTINUE SEMICOLON
     | block
     | funcdef
+    | SEMICOLON
     ;
 
 expr:
@@ -88,14 +147,7 @@ expr:
     ;
 
 assignexpr:
-    lvalue ASSIGN expr {
-        Symbol* existingSymbol = symbolTable->lookupSymbolScoped($1->name);
-
-        if (existingSymbol == nullptr) {
-            symbolTable->insertSymbol($1->name, $1->line, isFunction, false);
-            isFunction = false;
-        }
-    }
+    lvalue ASSIGN expr { insertToken($1, false); }
     ;
 
 term:
@@ -110,7 +162,7 @@ term:
     ;
 
 primary:
-    lvalue
+    lvalue { insertToken($1, true); }
     | call
     | objectdef
     | PAREN_OPEN funcdef PAREN_CLOSE
@@ -131,16 +183,29 @@ lvalue:
         SymbolStruct* symbolStruct = new SymbolStruct();
         symbolStruct->name = $1;
         symbolStruct->line = yylineno;
+        symbolStruct->type = ASSIGNMENT;
+
         $$ = symbolStruct;
       }
     | LOCAL ID {
         SymbolStruct* symbolStruct = new SymbolStruct();
         symbolStruct->name = $2;
         symbolStruct->line = yylineno;
+        symbolStruct->type = SCOPED;
+
         $$ = symbolStruct;
     }
-    | NAMESPACE ID
-    | member
+    | NAMESPACE ID {
+        SymbolStruct* symbolStruct = new SymbolStruct();
+        symbolStruct->name = $2;
+        symbolStruct->line = yylineno;
+        symbolStruct->type = GLOBAL;
+
+        $$ = symbolStruct;
+    }
+    | member {
+        isMemberCall = true;
+    }
     ;
 
 member:
@@ -152,13 +217,23 @@ member:
 
 call:
     call PAREN_OPEN elist PAREN_CLOSE
-    | lvalue callsuffix
+    | lvalue callsuffix {
+        Symbol* existingSymbol = symbolTable->lookupSymbol($1->name);
+
+        if (isMethodCall) {
+            isMethodCall = false;
+        } else if (existingSymbol == nullptr) {
+            char message[100];
+            sprintf(message, "Function %s not found", $1->name);
+            yyerror(message);
+        }
+    }
     | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE
     ;
 
 callsuffix:
     normcall
-    | methodcall
+    | methodcall { isMethodCall = true; }
     ;
 
 normcall:
@@ -172,6 +247,7 @@ methodcall:
 elist:
     expr
     | elist COMMA expr
+    |
     ;
 
 objectdef:
@@ -193,15 +269,22 @@ block:
     ;
 
 funcdef:
-    FUNCTION { isFunction = true; } PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
+    FUNCTION PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
     | FUNCTION { isFunction = true; } ID
      {
-             Symbol* symbol = symbolTable->lookupSymbolScoped($3);
+        Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
-             if (symbol == nullptr) {
-                 symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false);
-                 isFunction = false;
-             }
+        if (symbolTable->isNameReserved($3)) {
+            char message[100];
+            sprintf(message, "Reserved name %s cannot be used", $3);
+            yyerror(message);
+        }
+
+        if (symbol == nullptr) {
+           symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false);
+        }
+
+        isFunction = false;
      }
      PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block
     ;
@@ -245,7 +328,7 @@ returnstmt:
 %%
 
 int alpha_yyerror (const char* yaccProvidedMessage) {
-    fprintf(stderr, "%s: at line %d, before token: %s\n", yaccProvidedMessage, yylineno, yytext);
+    fprintf(stderr, "Line %d: %s\n", yylineno, yaccProvidedMessage);
     return 1;
 }
 

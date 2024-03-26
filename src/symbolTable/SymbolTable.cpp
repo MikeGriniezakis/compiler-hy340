@@ -15,8 +15,14 @@ SymbolTable::SymbolTable() {
 
 void SymbolTable::initializeSTDFunctions() {
     for (const auto &functionName : this->libraryFunctions) {
-        insertSymbol(functionName, 0, LIBFUNC, false);
+        insertSymbol(functionName, 0, true, false);
     }
+}
+
+bool SymbolTable::isNameReserved(const std::string& name) {
+    return name == "print" || name == "input" || name == "objectmemberkeys" || name == "objecttotalkeys" ||
+           name == "objectcopy" || name == "totalarguments" || name == "argument" || name == "typeof" ||
+           name == "strtonum" || name == "sqrt" || name == "cos" || name == "sin";
 }
 
 void SymbolTable::incScope() {
@@ -61,7 +67,7 @@ Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, 
             type = SCOPED;
         }
     }
-    auto* symbol = new Symbol(std::move(name), this->scope, line, type);
+    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR);
 
     this->symbolTable[symbol->getName()].push_back(symbol);
     this->scopes.at(this->scope).push_back(symbol);
@@ -73,6 +79,10 @@ void SymbolTable::deactivateSymbols(const uint scope) {
     for (auto &symbol : this->scopes.at(scope)) {
         symbol->setActive(false);
     }
+}
+
+uint SymbolTable::getScope() const {
+    return this->scope;
 }
 
 void SymbolTable::printSymbolTable() {
@@ -90,8 +100,26 @@ Symbol* SymbolTable::lookupSymbol(const std::string& name) {
         return nullptr;
     }
 
+    int maxScope = -1;
+    Symbol* maxSymbol = nullptr;
+
     for (auto &symbol : this->symbolTable[name]) {
-        if (symbol->isActive()) {
+        if (!symbol->isActive()) {
+            continue;
+        }
+
+        if ((int) symbol->getScope() > maxScope) {
+            maxScope = (int) symbol->getScope();
+            maxSymbol = symbol;
+        }
+    }
+
+    return maxSymbol;
+}
+
+Symbol* SymbolTable::lookupSymbolGlobal(const std::string& name) {
+    for (auto &symbol : this->scopes.at(0)) {
+        if (symbol->getName() == name && symbol->isActive()) {
             return symbol;
         }
     }

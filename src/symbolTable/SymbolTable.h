@@ -31,11 +31,15 @@ public:
     void incScope();
     void decScope();
 
+    uint getScope() const;
+
     void printSymbolTable();
     Symbol* insertSymbol(std::string name, uint line, bool isFunction, bool isFormal);
     Symbol* lookupSymbol(const std::string& name);
     Symbol* lookupSymbolScoped(const std::string& name);
+    Symbol* lookupSymbolGlobal(const std::string& name);
     void deactivateSymbols(uint scope);
+    bool isNameReserved(const std::string& name);
 };
 
 #endif //SYMBOLTABLE_H

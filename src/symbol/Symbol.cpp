@@ -49,3 +49,15 @@ SymbolStruct* Symbol::toStruct() {
 
     return symbolStruct;
 }
+
+uint Symbol::getScope() {
+    return this->scope;
+}
+
+SymbolType Symbol::getType() const {
+    return this->type;
+}
+
+SymbolClass Symbol::getSymbolClass() const {
+    return this->symbol_class;
+}
