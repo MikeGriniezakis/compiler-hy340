@@ -20,7 +20,6 @@ add_executable(
         src/symbol/Symbol.h
         src/symbol/Symbol.cpp
         src/symbolTable/SymbolTable.h
-        src/parser/parser.h
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(

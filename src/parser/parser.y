@@ -1,6 +1,8 @@
 %{
     #include <stdio.h>
+    #include <string.h>
     #include <src/symbolTable/SymbolTable.h>
+    #include <sstream>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -19,6 +21,8 @@
     bool isMemberCall = false;
     bool isFunction = false;
     bool isScopeIncreasedByFunction = false;
+
+    std::vector<char*> errors;
 
     void insertToken(struct SymbolStruct* symbol, bool isArgument) {
         Symbol* existingSymbol = nullptr;
@@ -355,7 +359,12 @@ returnstmt:
 %%
 
 int alpha_yyerror (const char* yaccProvidedMessage) {
-    fprintf(stderr, "Line %d: %s\n", yylineno, yaccProvidedMessage);
+    std::stringstream ss;
+
+    ss << "Error at line " << yylineno << ": " << yaccProvidedMessage << "\n";
+
+    errors.push_back(strdup(ss.str().c_str()));
+
     return 1;
 }
 
@@ -370,6 +379,10 @@ int main(int argc, char** argv) {
     yyparse();
 
     symbolTable->printSymbolTable();
+
+    for (auto error : errors) {
+        fprintf(stderr, "%s", error);
+    }
 
     return 0;
 }
