@@ -138,5 +138,5 @@ Symbol* SymbolTable::lookupSymbolScoped(const std::string& name) {
         }
     }
 
-    return nullptr;
+    return this->lookupSymbolGlobal(name);
 }

@@ -326,6 +326,14 @@ idlist:
 
          if (symbol == nullptr) {
              symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount);
+         } else if (symbol->getScope() == 0) {
+            char message[100];
+             sprintf(message, "%s cannot be redefined", $1);
+             yyerror(message);
+         } else if (symbol->getFunctionScope() == functionScopeCount) {
+             char message[100];
+             sprintf(message, "%s cannot be redefined", $1);
+             yyerror(message);
          }
 
          printf("[IDLIST] found ID at line %d\n", yylineno);
@@ -335,6 +343,14 @@ idlist:
 
          if (symbol == nullptr) {
              symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount);
+         } else if (symbol->getScope() == 0) {
+            char message[100];
+             sprintf(message, "%s cannot be redefined", $3);
+             yyerror(message);
+         } else if (symbol->getFunctionScope() == functionScopeCount) {
+             char message[100];
+             sprintf(message, "%s cannot be redefined", $1);
+             yyerror(message);
          }
 
         printf("[IDLIST] found idlist, ID at line %d\n", yylineno);
