@@ -13,6 +13,7 @@
 
     SymbolTable* symbolTable = new SymbolTable();
 
+    int functionCount = 0;
     int functionScopeCount = 0;
     int forScopeCount = 0;
     int whileScopeCount = 0;
@@ -296,7 +297,10 @@ block:
     ;
 
 funcdef:
-    FUNCTION { functionScopeCount++; } PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
+    FUNCTION { functionScopeCount++; } PAREN_OPEN {
+        symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount);
+        isScopeIncreasedByFunction = true; symbolTable->incScope();
+    } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
     | FUNCTION { functionScopeCount++; isFunction = true; } ID
      {
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
