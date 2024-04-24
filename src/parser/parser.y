@@ -3,6 +3,7 @@
     #include <string.h>
     #include <src/symbolTable/SymbolTable.h>
     #include <sstream>
+    #include <src/quads/Quads.h>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -12,6 +13,7 @@
     extern FILE* yyin;
 
     SymbolTable* symbolTable = new SymbolTable();
+    Quads* quads = new Quads();
 
     int functionCount = 0;
     int functionScopeCount = 0;
@@ -94,6 +96,7 @@
     double  doubleValue;
     bool    boolValue;
     struct SymbolStruct* symbol;
+    struct expr* expr;
 }
 
 %token <stringValue> ID
@@ -112,8 +115,27 @@
 %nonassoc UMINUS
 %left PAREN_OPEN PAREN_CLOSE
 
-%type <symbol> lvalue
-%type <symbol> idlist
+%type <expr> term
+%type <expr> assignexpr
+%type <expr> expr
+%type <expr> lvalue
+%type <expr> primary
+%type <expr> const
+%type <expr> member
+%type <expr> funcdef
+%type <expr> methodcall
+%type <expr> elist
+%type <expr> callsuffix
+%type <expr> normcall
+%type <expr> call
+%type <expr> elist_expressions
+%type <expr> objectdef
+%type <expr> indexedelem_list
+%type <expr> indexedelem
+%type <expr> indexed
+%type <expr> ifprefix
+%type <expr> elseprefix
+%type <expr> whilestart
 
 %%
 
@@ -147,48 +169,113 @@ stmt:
     ;
 
 expr:
-    assignexpr { printf("[EXPR] found assignexpr at line %d\n", yylineno); }
-    | expr PLUS expr { printf("[EXPR] found expr + expr at line %d\n", yylineno); }
-    | expr MINUS expr { printf("[EXPR] found expr - expr at line %d\n", yylineno); }
-    | expr MULT expr { printf("[EXPR] found expr * expr at line %d\n", yylineno); }
-    | expr DIV expr { printf("[EXPR] found expr / expr at line %d\n", yylineno); }
-    | expr MOD expr { printf("[EXPR] found expr % expr at line %d\n", yylineno); }
-    | expr GT expr  { printf("[EXPR] found expr > expr at line %d\n", yylineno); }
-    | expr GE expr { printf("[EXPR] found expr >= expr at line %d\n", yylineno); }
-    | expr LT expr { printf("[EXPR] found expr < expr at line %d\n", yylineno); }
-    | expr LE expr { printf("[EXPR] found expr <= expr at line %d\n", yylineno); }
-    | expr EQUAL expr { printf("[EXPR] found expr == expr at line %d\n", yylineno); }
-    | expr DIFF expr { printf("[EXPR] found expr != expr at line %d\n", yylineno); }
-    | expr AND expr { printf("[EXPR] found expr AND expr at line %d\n", yylineno); }
-    | expr OR expr { printf("[EXPR] found expr OR expr at line %d\n", yylineno); }
-    | term { printf("[EXPR] found term at line %d\n", yylineno); }
+    assignexpr { $$ = $1; printf("[EXPR] found assignexpr at line %d\n", yylineno); }
+    | expr PLUS expr {
+        $$ = quads->newExpr(arithexpr_e);
+        quads->emit(add_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr + expr at line %d\n", yylineno);
+    }
+    | expr MINUS expr {
+        $$ = quads->newExpr(arithexpr_e);
+        quads->emit(uminus_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr - expr at line %d\n", yylineno);
+    }
+    | expr MULT expr {
+        $$ = quads->newExpr(arithexpr_e);
+        quads->emit(mul_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr * expr at line %d\n", yylineno);
+    }
+    | expr DIV expr {
+        $$ = quads->newExpr(arithexpr_e);
+        quads->emit(div_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr / expr at line %d\n", yylineno);
+    }
+    | expr MOD expr {
+        $$ = quads->newExpr(arithexpr_e);
+        quads->emit(mod_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr % expr at line %d\n", yylineno);
+    }
+    | expr GT expr  {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr > expr at line %d\n", yylineno);
+    }
+    | expr GE expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr >= expr at line %d\n", yylineno);
+    }
+    | expr LT expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr < expr at line %d\n", yylineno);
+    }
+    | expr LE expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr <= expr at line %d\n", yylineno);
+    }
+    | expr EQUAL expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr == expr at line %d\n", yylineno);
+    }
+    | expr DIFF expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr != expr at line %d\n", yylineno);
+    }
+    | expr AND expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(and_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr AND expr at line %d\n", yylineno);
+    }
+    | expr OR expr {
+        $$ = quads->newExpr(boolexpr_e);
+        quads->emit(or_op, $$, $1, $3, 0, yylineno);
+        printf("[EXPR] found expr OR expr at line %d\n", yylineno);
+    }
+    | term { $$ = $1; printf("[EXPR] found term at line %d\n", yylineno); }
     ;
 
 assignexpr:
-    lvalue ASSIGN expr { insertToken($1, false); printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno); }
+    lvalue ASSIGN expr {
+        $$ = quads->newExpr(assignexpr_e);
+        quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
+        insertToken($1->symbol, false);
+        printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
+    }
     ;
 
 term:
-    PAREN_OPEN expr PAREN_CLOSE { printf("[TERM] found (expr) at line %d\n", yylineno); }
+    PAREN_OPEN expr PAREN_CLOSE { $$ = $2; printf("[TERM] found (expr) at line %d\n", yylineno); }
     | MINUS expr %prec UMINUS { printf("[TERM] found -expr at line %d\n", yylineno); }
     | NOT expr { printf("[TERM] found !expr at line %d\n", yylineno); }
     | INC lvalue { printf("[TERM] found ++lvalue at line %d\n", yylineno); }
     | lvalue INC { printf("[TERM] found lvalue++ at line %d\n", yylineno); }
     | DEC lvalue { printf("[TERM] found --lvalue at line %d\n", yylineno); }
     | lvalue DEC { printf("[TERM] found lvalue-- at line %d\n", yylineno); }
-    | primary { printf("[TERM] found primary at line %d\n", yylineno); }
+    | primary { $$ = $1; printf("[TERM] found primary at line %d\n", yylineno); }
     ;
 
 primary:
-    lvalue { insertToken($1, true); printf("[PRIMARY] found lvalue at line %d\n", yylineno);}
+    lvalue {
+        $$ = $1;
+        insertToken($1->symbol, true);
+        printf("[PRIMARY] found lvalue at line %d\n", yylineno);
+    }
     | call { printf("[PRIMARY] found call at line %d\n", yylineno); }
     | objectdef { printf("[PRIMARY] found objectdef at line %d\n", yylineno); }
     | PAREN_OPEN funcdef PAREN_CLOSE { printf("[PRIMARY] found (funcdef) at line %d\n", yylineno); }
-    | const { printf("[PRIMARY] found const at line %d\n", yylineno); }
+    | const { $$ = $1; printf("[PRIMARY] found const at line %d\n", yylineno); }
     ;
 
 const:
-    INTEGER { printf("[CONST] found integer at line %d\n", yylineno); }
+    INTEGER {
+        $$ = quads->newExpr(constnum_e);
+        $$->numConst = $1;
+        printf("[CONST] found integer at line %d\n", yylineno);
+    }
     | FLOAT { printf("[CONST] found float at line %d\n", yylineno); }
     | STRING { printf("[CONST] found string at line %d\n", yylineno); }
     | TRUE { printf("[CONST] found true at line %d\n", yylineno); }
@@ -203,7 +290,8 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = ASSIGNMENT;
 
-        $$ = symbolStruct;
+	$$ = quads->newExpr(var_e);
+        $$->symbol = symbolStruct;
 
         printf("[LVALUE] found ID at line %d\n", yylineno);
       }
@@ -213,7 +301,8 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = SCOPED;
 
-        $$ = symbolStruct;
+	$$ = quads->newExpr(var_e);
+        $$->symbol = symbolStruct;
 
         printf("[LVALUE] found LOCAL ID at line %d\n", yylineno);
     }
@@ -223,7 +312,8 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = GLOBAL;
 
-        $$ = symbolStruct;
+	$$ = quads->newExpr(var_e);
+        $$->symbol = symbolStruct;
 
         printf("[LVALUE] found NAMESPACE ID at line %d\n", yylineno);
     }
@@ -244,13 +334,13 @@ member:
 call:
     call PAREN_OPEN elist PAREN_CLOSE { printf("[CALL] found call(elist) at line %d\n", yylineno); }
     | lvalue callsuffix {
-        Symbol* existingSymbol = symbolTable->lookupSymbol($1->name);
+        Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name);
 
         if (isMethodCall) {
             isMethodCall = false;
         } else if (existingSymbol == nullptr) {
             char message[100];
-            sprintf(message, "Function %s not defined", $1->name);
+            sprintf(message, "Function %s not defined", $1->symbol->name);
             yyerror(message);
         }
 
@@ -349,7 +439,7 @@ idlist:
              yyerror(message);
          } else if (symbol->getFunctionScope() == functionScopeCount) {
              char message[100];
-             sprintf(message, "%s cannot be redefined", $1);
+             sprintf(message, "%s cannot be redefined", $3);
              yyerror(message);
          }
 
@@ -403,6 +493,8 @@ int main(int argc, char** argv) {
     for (auto error : errors) {
         fprintf(stderr, "%s", error);
     }
+
+    quads->printQuads();
 
     return 0;
 }

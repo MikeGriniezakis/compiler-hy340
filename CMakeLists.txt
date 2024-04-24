@@ -19,7 +19,8 @@ add_executable(
         src/symbolTable/SymbolTable.h
         src/symbol/Symbol.h
         src/symbol/Symbol.cpp
-        src/symbolTable/SymbolTable.h
+        src/quads/Quads.cpp
+        src/quads/Quads.h
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(

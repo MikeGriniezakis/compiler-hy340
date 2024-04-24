@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DeveloperToolsToolWindowSettingsV1" lastSelectedContentNodeId="text-diff">
+    <developerToolsConfigurations>
+      <developerToolConfiguration developerToolId="base64-encoder-decoder" id="1ffb4c00-552f-4fec-9ea7-3541f3b688c1" name="Workbench">
+        <properties>
+          <property key="sourceText" type="INPUT" value="kotlin.String|test" />
+          <property key="targetText" type="INPUT" value="kotlin.String|dGVzdA==" />
+        </properties>
+      </developerToolConfiguration>
+      <developerToolConfiguration developerToolId="color-picker" id="0d1da90f-1cc6-4de2-983d-0a0fcfeec65c" name="Workbench">
+        <properties>
+          <property key="selectedColor" type="INPUT" value="com.intellij.ui.JBColor|-7572852" />
+        </properties>
+      </developerToolConfiguration>
+    </developerToolsConfigurations>
+    <expandedGroupNodeIds />
+  </component>
+</project>
