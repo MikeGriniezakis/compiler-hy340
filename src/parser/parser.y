@@ -137,6 +137,7 @@
 %type <expr> ifprefix
 %type <expr> elseprefix
 %type <expr> whilestart
+%type <expr> returnstmt
 
 %%
 
@@ -332,7 +333,10 @@ primary:
     }
     | call { printf("[PRIMARY] found call at line %d\n", yylineno); }
     | objectdef { printf("[PRIMARY] found objectdef at line %d\n", yylineno); }
-    | PAREN_OPEN funcdef PAREN_CLOSE { printf("[PRIMARY] found (funcdef) at line %d\n", yylineno); }
+    | PAREN_OPEN funcdef PAREN_CLOSE {
+        $$ = $2;
+        printf("[PRIMARY] found (funcdef) at line %d\n", yylineno);
+    }
     | const { $$ = $1; printf("[PRIMARY] found const at line %d\n", yylineno); }
     ;
 
@@ -482,13 +486,19 @@ block:
 
 funcdef:
     FUNCTION { functionScopeCount++; } PAREN_OPEN {
-        symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+        Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+        $<expr>$ = quads->newExpr(libraryfunc_e);
+        $<expr>$->symbol = symbol->toStruct();
+        quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
         isScopeIncreasedByFunction = true;
         symbolTable->incScope();
         if (offsets.size()-1 < symbolTable->getScope()) {
             offsets.push_back(0);
         }
-    } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
+    } idlist PAREN_CLOSE block {
+        quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+        functionScopeCount--;
+    } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     | FUNCTION { functionScopeCount++; isFunction = true; } ID
      {
          Symbol* symbol = symbolTable->lookupSymbolScoped($3);
@@ -502,6 +512,9 @@ funcdef:
          if (symbol == nullptr) {
              symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
          }
+         $<expr>$ = quads->newExpr(libraryfunc_e);
+         $<expr>$->symbol = symbol->toStruct();
+         quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
 
          isFunction = false;
      }
@@ -511,7 +524,10 @@ funcdef:
          if (offsets.size()-1 < symbolTable->getScope()) {
              offsets.push_back(0);
          }
-     } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
+     } idlist PAREN_CLOSE block {
+         functionScopeCount--;
+         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     ;
 
 idlist:
@@ -566,8 +582,11 @@ forstmt:
     ;
 
 returnstmt:
-    RETURN { if (functionScopeCount == 0) { yyerror("Return must be used inside a function"); } } expr SEMICOLON { printf("[RETURNSTMT] found return expr; at line %d\n", yylineno); }
-    | RETURN SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); }
+    RETURN { if (functionScopeCount == 0) { yyerror("Return must be used inside a function"); } } expr SEMICOLON {
+        quads->emit(ret_op, nullptr, $3, nullptr, 0, yylineno);
+        printf("[RETURNSTMT] found return expr; at line %d\n", yylineno);
+    }
+    | RETURN SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno); }
     ;
 
 %%

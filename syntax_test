@@ -1,1 +1,6 @@
-y = x + 1;
+z = x + y;
+function f(a,b) { return a+b; }
+function g() { function h() {} }
+x = g;
+x = (function() {});
+
