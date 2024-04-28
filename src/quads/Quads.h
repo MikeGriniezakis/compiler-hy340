@@ -80,10 +80,12 @@ class Quads {
 public:
     Quads() : tempCounter(0) {}
 
-    SymbolStruct* createTemp();
+    SymbolStruct* createTemp(int offset);
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
     void printQuads();
     expr* newExpr(expr_t type);
+
+    bool checkArithmeticExpression(const expr* first, const expr* second);
 };
 
 #endif //QUADS_H

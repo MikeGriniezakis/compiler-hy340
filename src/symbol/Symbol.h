@@ -22,6 +22,7 @@ struct SymbolStruct {
     char* name;
     int scope;
     int line;
+    int offset;
     SymbolClass symbol_class;
     SymbolType type;
 };
@@ -30,17 +31,19 @@ class Symbol {
     bool active;
     std::string name;
     const uint scope;
+    const uint offset;
     const uint function_scope;
     const uint line;
     const SymbolType type;
     const SymbolClass symbol_class;
 public:
-    Symbol(std::string name, const uint scope, const uint line, const SymbolType type, const SymbolClass symbol_class, const uint function_scope) :
+    Symbol(std::string name, const uint scope, const uint line, const SymbolType type, const SymbolClass symbol_class, const uint function_scope, const uint offset) :
     name(std::move(name)),
     scope(scope),
     function_scope(function_scope),
     line(line),
     symbol_class(symbol_class),
+    offset(offset),
     type(type) {
         this->active = true;
     }

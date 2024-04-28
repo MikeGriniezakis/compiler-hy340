@@ -45,7 +45,7 @@ SymbolStruct* Symbol::toStruct() {
     symbolStruct->scope = this->scope;
     symbolStruct->line = this->line;
     symbolStruct->type = this->type;
-    // symbolStruct.arguments = this->arguments.data();
+    symbolStruct->offset = this->offset;
 
     return symbolStruct;
 }

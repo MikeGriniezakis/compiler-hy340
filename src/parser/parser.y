@@ -26,6 +26,7 @@
     bool isScopeIncreasedByFunction = false;
 
     std::vector<char*> errors;
+    std::vector<int> offsets = {0};
 
     void insertToken(struct SymbolStruct* symbol, bool isArgument) {
         Symbol* existingSymbol = nullptr;
@@ -57,7 +58,7 @@
 
         if (symbol->type == SCOPED) {
             if (existingSymbol == nullptr) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
                 isFunction = false;
             }
         }
@@ -65,7 +66,7 @@
 
         if (symbol->type == ASSIGNMENT) {
             if (existingSymbol == nullptr) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
                 isFunction = false;
             } else {
                 if (existingSymbol->getScope() < (int) symbolTable->getScope() && existingSymbol->getFunctionScope() != functionScopeCount && existingSymbol->getScope() != 0 && (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)) {
@@ -171,80 +172,132 @@ stmt:
 expr:
     assignexpr { $$ = $1; printf("[EXPR] found assignexpr at line %d\n", yylineno); }
     | expr PLUS expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(add_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr + expr at line %d\n", yylineno);
     }
     | expr MINUS expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(uminus_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr - expr at line %d\n", yylineno);
     }
     | expr MULT expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(mul_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr * expr at line %d\n", yylineno);
     }
     | expr DIV expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(div_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr / expr at line %d\n", yylineno);
     }
     | expr MOD expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(mod_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr % expr at line %d\n", yylineno);
     }
     | expr GT expr  {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
     | expr GE expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr >= expr at line %d\n", yylineno);
     }
     | expr LT expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr < expr at line %d\n", yylineno);
     }
     | expr LE expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr <= expr at line %d\n", yylineno);
     }
     | expr EQUAL expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr == expr at line %d\n", yylineno);
     }
     | expr DIFF expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr != expr at line %d\n", yylineno);
     }
     | expr AND expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(and_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
     }
     | expr OR expr {
+        if (!quads->checkArithmeticExpression($1, $3)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp();
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(or_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
@@ -289,11 +342,30 @@ const:
         $$->numConst = $1;
         printf("[CONST] found integer at line %d\n", yylineno);
     }
-    | FLOAT { printf("[CONST] found float at line %d\n", yylineno); }
-    | STRING { printf("[CONST] found string at line %d\n", yylineno); }
-    | TRUE { printf("[CONST] found true at line %d\n", yylineno); }
-    | FALSE { printf("[CONST] found false at line %d\n", yylineno); }
-    | NIL { printf("[CONST] found nil at line %d\n", yylineno); }
+    | FLOAT {
+        $$ = quads->newExpr(constnum_e);
+        $$->numConst = $1;
+        printf("[CONST] found float at line %d\n", yylineno);
+    }
+    | STRING {
+        $$ = quads->newExpr(conststring_e);
+        $$->strConst = $1;
+        printf("[CONST] found string at line %d\n", yylineno);
+    }
+    | TRUE {
+        $$ = quads->newExpr(constbool_e);
+        $$->boolConst = false;
+        printf("[CONST] found true at line %d\n", yylineno);
+    }
+    | FALSE {
+        $$ = quads->newExpr(constbool_e);
+        $$->boolConst = false;
+        printf("[CONST] found false at line %d\n", yylineno);
+    }
+    | NIL {
+        $$ = quads->newExpr(nil_e);
+        printf("[CONST] found nil at line %d\n", yylineno);
+    }
     ;
 
 lvalue:
@@ -314,7 +386,7 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = SCOPED;
 
-	$$ = quads->newExpr(var_e);
+        $$ = quads->newExpr(var_e);
         $$->symbol = symbolStruct;
 
         printf("[LVALUE] found LOCAL ID at line %d\n", yylineno);
@@ -325,7 +397,7 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = GLOBAL;
 
-	$$ = quads->newExpr(var_e);
+        $$ = quads->newExpr(var_e);
         $$->symbol = symbolStruct;
 
         printf("[LVALUE] found NAMESPACE ID at line %d\n", yylineno);
@@ -396,31 +468,50 @@ indexedelem:
     ;
 
 block:
-    CURLY_OPEN { if (!isScopeIncreasedByFunction) {symbolTable->incScope();} else { isScopeIncreasedByFunction = false; } } stmts CURLY_CLOSE { symbolTable->decScope(); printf("[BLOCK] found {stmts} at line %d\n", yylineno); }
+    CURLY_OPEN { if (!isScopeIncreasedByFunction) {
+        symbolTable->incScope();
+        if (offsets.size()-1 < symbolTable->getScope()) {
+            offsets.push_back(0);
+        }
+    } else { isScopeIncreasedByFunction = false; } } stmts CURLY_CLOSE {
+        symbolTable->decScope();
+        offsets.at(symbolTable->getScope() + 1) = 0;
+        printf("[BLOCK] found {stmts} at line %d\n", yylineno);
+    }
     ;
 
 funcdef:
     FUNCTION { functionScopeCount++; } PAREN_OPEN {
-        symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount);
-        isScopeIncreasedByFunction = true; symbolTable->incScope();
+        symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+        isScopeIncreasedByFunction = true;
+        symbolTable->incScope();
+        if (offsets.size()-1 < symbolTable->getScope()) {
+            offsets.push_back(0);
+        }
     } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
     | FUNCTION { functionScopeCount++; isFunction = true; } ID
      {
-        Symbol* symbol = symbolTable->lookupSymbolScoped($3);
+         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
-        if (symbolTable->isNameReserved($3)) {
-            char message[100];
-            sprintf(message, "Reserved name %s cannot be used", $3);
-            yyerror(message);
-        }
+         if (symbolTable->isNameReserved($3)) {
+             char message[100];
+             sprintf(message, "Reserved name %s cannot be used", $3);
+             yyerror(message);
+         }
 
-        if (symbol == nullptr) {
-           symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount);
-        }
+         if (symbol == nullptr) {
+             symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+         }
 
-        isFunction = false;
+         isFunction = false;
      }
-     PAREN_OPEN { isScopeIncreasedByFunction = true; symbolTable->incScope(); } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
+     PAREN_OPEN {
+         isScopeIncreasedByFunction = true;
+         symbolTable->incScope();
+         if (offsets.size()-1 < symbolTable->getScope()) {
+             offsets.push_back(0);
+         }
+     } idlist PAREN_CLOSE block { functionScopeCount--; } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); }
     ;
 
 idlist:
@@ -428,7 +519,7 @@ idlist:
         Symbol* symbol = symbolTable->lookupSymbolScoped($1);
 
          if (symbol == nullptr) {
-             symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount);
+             symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
          } else if (symbol->getScope() == 0) {
             char message[100];
              sprintf(message, "%s cannot be redefined", $1);
@@ -445,7 +536,7 @@ idlist:
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
          if (symbol == nullptr) {
-             symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount);
+             symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
          } else if (symbol->getScope() == 0) {
             char message[100];
              sprintf(message, "%s cannot be redefined", $3);

@@ -16,6 +16,7 @@ void printExpr(std::stringstream* ss, expr* expr) {
         case constnum_e:
             *ss << expr->numConst << "\t";
             break;
+        case boolexpr_e:
         case constbool_e:
             if (expr->boolConst) {
                 *ss << "true\t";
@@ -25,6 +26,9 @@ void printExpr(std::stringstream* ss, expr* expr) {
             break;
         case conststring_e:
             *ss << expr->strConst << "\t";
+            break;
+        case nil_e:
+            *ss << "nil\t";
             break;
         default:
             if (expr->symbol != nullptr) {
@@ -70,11 +74,16 @@ void Quads::printQuads() {
     }
 }
 
-SymbolStruct* Quads::createTemp() {
+bool Quads::checkArithmeticExpression(const expr* first, const expr* second) {
+    return (first->type != arithexpr_e || first->type != constnum_e) && (second->type != arithexpr_e || second->type != constnum_e);
+}
+
+SymbolStruct* Quads::createTemp(int offset) {
     auto temp = new SymbolStruct();
     char* name = (char*)malloc(10);
     sprintf(name, "_t%d", this->tempCounter++);
     temp->name = strdup(name);
+    temp->offset = offset;
 
     return temp;
 }
