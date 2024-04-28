@@ -172,66 +172,79 @@ expr:
     assignexpr { $$ = $1; printf("[EXPR] found assignexpr at line %d\n", yylineno); }
     | expr PLUS expr {
         $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(add_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr + expr at line %d\n", yylineno);
     }
     | expr MINUS expr {
         $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(uminus_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr - expr at line %d\n", yylineno);
     }
     | expr MULT expr {
         $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(mul_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr * expr at line %d\n", yylineno);
     }
     | expr DIV expr {
         $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(div_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr / expr at line %d\n", yylineno);
     }
     | expr MOD expr {
         $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(mod_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr % expr at line %d\n", yylineno);
     }
     | expr GT expr  {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
     | expr GE expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr >= expr at line %d\n", yylineno);
     }
     | expr LT expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr < expr at line %d\n", yylineno);
     }
     | expr LE expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr <= expr at line %d\n", yylineno);
     }
     | expr EQUAL expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr == expr at line %d\n", yylineno);
     }
     | expr DIFF expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr != expr at line %d\n", yylineno);
     }
     | expr AND expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(and_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
     }
     | expr OR expr {
         $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp();
         quads->emit(or_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
@@ -290,7 +303,7 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = ASSIGNMENT;
 
-	$$ = quads->newExpr(var_e);
+	    $$ = quads->newExpr(var_e);
         $$->symbol = symbolStruct;
 
         printf("[LVALUE] found ID at line %d\n", yylineno);

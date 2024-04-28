@@ -63,6 +63,8 @@ public:
     Quad(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line)
                : code(code), result(result), arg1(arg1), arg2(arg2), label(label), line(line) {}
 
+    void print();
+
 public:
     expr* getResult() { return result; }
     expr* getArg1() { return arg1; }
@@ -78,6 +80,7 @@ class Quads {
 public:
     Quads() : tempCounter(0) {}
 
+    SymbolStruct* createTemp();
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
     void printQuads();
     expr* newExpr(expr_t type);
