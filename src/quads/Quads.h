@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Symbol.h"
+#include "SymbolTable.h"
 
 enum iopcode {
     assign_op, mul_op, uminus_op, not_op,
@@ -77,13 +78,16 @@ public:
 class Quads {
     std::vector<Quad*> quads;
     unsigned tempCounter;
+    SymbolTable* symbolTable;
 public:
-    Quads() : tempCounter(0) {}
+    Quads(SymbolTable* symbolTable) : tempCounter(0), symbolTable(symbolTable) {}
 
     SymbolStruct* createTemp(int offset);
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
+    expr* emitIfTableItem(expr *result, unsigned line, int offset);
     void printQuads();
     expr* newExpr(expr_t type);
+    expr* makeMember(expr* lvalue, char* name, unsigned line, int offset);
 
     bool checkArithmeticExpression(const expr* first, const expr* second);
 };

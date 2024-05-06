@@ -13,7 +13,7 @@
     extern FILE* yyin;
 
     SymbolTable* symbolTable = new SymbolTable();
-    Quads* quads = new Quads();
+    Quads* quads = new Quads(symbolTable);
 
     int functionCount = 0;
     int functionScopeCount = 0;
@@ -307,9 +307,18 @@ expr:
 
 assignexpr:
     lvalue ASSIGN expr {
-        $$ = quads->newExpr(assignexpr_e);
-        quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
-        insertToken($1->symbol, false);
+        if ($1->type == tableitem_e) {
+            quads->emit(tablesetelem_op, $1, $1->index, $3, 0, yylineno);
+
+            $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            $$->type = assignexpr_e;
+        } else {
+            quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
+            $$ = quads->newExpr(assignexpr_e);
+            $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
+            insertToken($1->symbol, false);
+        }
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
     }
     ;
@@ -327,7 +336,7 @@ term:
 
 primary:
     lvalue {
-        $$ = $1;
+        $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
         insertToken($1->symbol, true);
         printf("[PRIMARY] found lvalue at line %d\n", yylineno);
     }
@@ -379,8 +388,15 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = ASSIGNMENT;
 
-	    $$ = quads->newExpr(var_e);
-        $$->symbol = symbolStruct;
+
+        Symbol* existingSymbol = symbolTable->lookupSymbol($1);
+        $$ = quads->newExpr(var_e);
+
+        if (existingSymbol == nullptr) {
+            $$->symbol = symbolStruct;
+        } else {
+            $$->symbol = existingSymbol->toStruct();
+        }
 
         printf("[LVALUE] found ID at line %d\n", yylineno);
       }
@@ -407,6 +423,7 @@ lvalue:
         printf("[LVALUE] found NAMESPACE ID at line %d\n", yylineno);
     }
     | member {
+        $$ = $1;
         isMemberCall = true;
 
         printf("[LVALUE] found member at line %d\n", yylineno);
@@ -414,8 +431,18 @@ lvalue:
     ;
 
 member:
-    lvalue DOT ID { printf("[MEMBER] found lvalue.ID at line %d\n", yylineno); }
-    | lvalue BRACKET_OPEN expr BRACKET_CLOSE { printf("[MEMBER] found lvalue[expr] at line %d\n", yylineno); }
+    lvalue DOT ID {
+        $$ = quads->makeMember($1, $3, offsets[symbolTable->getScope()], yylineno);
+        printf("[MEMBER] found lvalue.ID at line %d\n", yylineno);
+    }
+    | lvalue BRACKET_OPEN expr BRACKET_CLOSE {
+        expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+
+        $$ = quads->newExpr(tableitem_e);
+        $$->symbol = temp->symbol;
+        $$->index = $3;
+        printf("[MEMBER] found lvalue[expr] at line %d\n", yylineno);
+    }
     | call DOT ID { printf("[MEMBER] found call.ID at line %d\n", yylineno); }
     | call BRACKET_OPEN expr BRACKET_CLOSE { printf("[MEMBER] found call[expr] at line %d\n", yylineno); }
     ;
@@ -458,7 +485,12 @@ elist:
     ;
 
 objectdef:
-    BRACKET_OPEN elist BRACKET_CLOSE { printf("[OBJECTDEF] found [elist] at line %d\n", yylineno); }
+    BRACKET_OPEN elist BRACKET_CLOSE {
+        $$ = quads->newExpr(newtable_e);
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
+        printf("[OBJECTDEF] found [elist] at line %d\n", yylineno);
+    }
     | BRACKET_OPEN indexed BRACKET_CLOSE { printf("[OBJECTDEF] found [indexed] at line %d\n", yylineno); }
     ;
 

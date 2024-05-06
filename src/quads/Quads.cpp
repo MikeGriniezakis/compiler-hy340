@@ -75,15 +75,42 @@ void Quads::printQuads() {
 }
 
 bool Quads::checkArithmeticExpression(const expr* first, const expr* second) {
-    return (first->type != arithexpr_e || first->type != constnum_e) && (second->type != arithexpr_e || second->type != constnum_e);
+    return (first->type != arithexpr_e || first->type != constnum_e) && (
+               second->type != arithexpr_e || second->type != constnum_e);
+}
+
+expr* Quads::emitIfTableItem(expr* expr, unsigned line, int offset) {
+    if (expr->type != tableitem_e) {
+        return expr;
+    }
+
+    auto res = this->newExpr(var_e);
+    res->symbol = this->createTemp(offset);
+
+    emit(tablegetelem_op, res, expr, expr->index, 0, line);
+
+    return res;
+}
+
+
+expr* Quads::makeMember(expr* lvalue, char* name, unsigned line, int offset) {
+    lvalue = this->emitIfTableItem(lvalue, line, offset);
+    auto expr = newExpr(tableitem_e);
+    expr->index = newExpr(conststring_e);
+    expr->index->strConst = strdup(name);
+    expr->symbol = lvalue->symbol;
+
+    return expr;
 }
 
 SymbolStruct* Quads::createTemp(int offset) {
     auto temp = new SymbolStruct();
-    char* name = (char*)malloc(10);
+    char* name = (char *) malloc(10);
     sprintf(name, "_t%d", this->tempCounter++);
     temp->name = strdup(name);
     temp->offset = offset;
+
+    this->symbolTable->insertSymbol(temp->name, 0, false, false, 0, offset);
 
     return temp;
 }
