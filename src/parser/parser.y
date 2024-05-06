@@ -325,7 +325,12 @@ assignexpr:
 
 term:
     PAREN_OPEN expr PAREN_CLOSE { $$ = $2; printf("[TERM] found (expr) at line %d\n", yylineno); }
-    | MINUS expr %prec UMINUS { printf("[TERM] found -expr at line %d\n", yylineno); }
+    | MINUS expr %prec UMINUS {
+        $$ = quads->newExpr(arithexpr_e);
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        quads->emit(uminus_op, $$, $2, nullptr, 0, yylineno);
+        printf("[TERM] found -expr at line %d\n", yylineno);
+    }
     | NOT expr { printf("[TERM] found !expr at line %d\n", yylineno); }
     | INC lvalue { printf("[TERM] found ++lvalue at line %d\n", yylineno); }
     | lvalue INC { printf("[TERM] found lvalue++ at line %d\n", yylineno); }
@@ -432,7 +437,7 @@ lvalue:
 
 member:
     lvalue DOT ID {
-        $$ = quads->makeMember($1, $3, offsets[symbolTable->getScope()], yylineno);
+        $$ = quads->makeMember($1, $3, offsets[symbolTable->getScope()]++, yylineno);
         printf("[MEMBER] found lvalue.ID at line %d\n", yylineno);
     }
     | lvalue BRACKET_OPEN expr BRACKET_CLOSE {
@@ -475,32 +480,77 @@ normcall:
     ;
 
 methodcall:
-    DOUBLE_DOT ID PAREN_OPEN elist PAREN_CLOSE { printf("[METHODCALL] found ..ID(elist) at line %d\n", yylineno); }
+    DOUBLE_DOT ID PAREN_OPEN elist PAREN_CLOSE {
+        printf("[METHODCALL] found ..ID(elist) at line %d\n", yylineno);
+    }
     ;
 
 elist:
-    expr { printf("[ELIST] found expr at line %d\n", yylineno); }
-    | elist COMMA expr { printf("[ELIST] found elist, expr at line %d\n", yylineno); }
-    |
+    expr {
+        $$ = $1;
+        printf("[ELIST] found expr at line %d\n", yylineno);
+    }
+    | expr COMMA elist {
+        $$ = $1;
+        $$->next = $3;
+        printf("[ELIST] found elist, expr at line %d\n", yylineno);
+    }
+    | { $$ = nullptr; }
     ;
 
 objectdef:
     BRACKET_OPEN elist BRACKET_CLOSE {
         $$ = quads->newExpr(newtable_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+
         quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
+        for (int i = 0; $elist; $elist = $elist->next) {
+            expr* elist_expr = quads->newExpr(constnum_e);
+            elist_expr->numConst = i++;
+            quads->emit(tablesetelem_op, $$, elist_expr, $elist, 0, yylineno);
+        }
+
         printf("[OBJECTDEF] found [elist] at line %d\n", yylineno);
     }
-    | BRACKET_OPEN indexed BRACKET_CLOSE { printf("[OBJECTDEF] found [indexed] at line %d\n", yylineno); }
+    | BRACKET_OPEN indexed BRACKET_CLOSE {
+        $$ = quads->newExpr(newtable_e);
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+
+        quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
+        expr* index = $indexed;
+        while (true) {
+            if (index == nullptr) {
+                break;
+            }
+
+            quads->emit(tablesetelem_op, $$, index->index, index, 0, yylineno);
+
+            index = index->next;
+        }
+
+        printf("[OBJECTDEF] found [indexed] at line %d\n", yylineno);
+    }
     ;
 
 indexed:
-    indexedelem { printf("[INDEXED] found indexedelem at line %d\n", yylineno); }
-    | indexed COMMA indexedelem { printf("[INDEXED] found indexed, indexedelem at line %d\n", yylineno); }
+    indexedelem {
+        $$ = $1;
+        printf("[INDEXED] found indexedelem at line %d\n", yylineno);
+    }
+    | indexedelem COMMA indexed {
+        $$ = $1;
+        $$->next = $3;
+        printf("[INDEXED] found indexed, indexedelem at line %d\n", yylineno);
+    }
+    | { $$ = nullptr; }
     ;
 
 indexedelem:
-    CURLY_OPEN expr COLON expr CURLY_CLOSE { printf("[INDEXEDELEM] found {expr:expr} at line %d\n", yylineno); }
+    CURLY_OPEN expr COLON expr CURLY_CLOSE {
+        $$ = $4;
+        $$->index = $2;
+        printf("[INDEXEDELEM] found {expr:expr} at line %d\n", yylineno);
+    }
     ;
 
 block:
