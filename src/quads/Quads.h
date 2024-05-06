@@ -90,6 +90,7 @@ public:
     expr* makeMember(expr* lvalue, char* name, unsigned line, int offset);
 
     bool checkArithmeticExpression(const expr* first, const expr* second);
+    bool checkArithmeticExpression(const expr* expr);
 };
 
 #endif //QUADS_H

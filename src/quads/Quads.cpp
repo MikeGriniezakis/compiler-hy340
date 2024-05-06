@@ -79,6 +79,10 @@ bool Quads::checkArithmeticExpression(const expr* first, const expr* second) {
                second->type != arithexpr_e || second->type != constnum_e);
 }
 
+bool Quads::checkArithmeticExpression(const expr* expr) {
+    return expr->type != arithexpr_e || expr->type != constnum_e;
+}
+
 expr* Quads::emitIfTableItem(expr* expr, unsigned line, int offset) {
     if (expr->type != tableitem_e) {
         return expr;
