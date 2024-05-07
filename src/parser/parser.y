@@ -136,7 +136,7 @@
 %type <expr> indexedelem
 %type <expr> indexed
 %type <intValue> ifprefix
-%type <expr> elseprefix
+%type <intValue> elseprefix
 %type <expr> whilestart
 %type <expr> returnstmt
 
@@ -317,7 +317,7 @@ assignexpr:
             quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
             $$ = quads->newExpr(assignexpr_e);
             $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
+            //quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
             insertToken($1->symbol, false);
         }
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
@@ -763,11 +763,13 @@ idlist:
     ;
 
 ifstmt:
-    ifprefix stmts {
+    ifprefix stmt {
         quads->patchLabel($1, quads->nextQuad());
         printf("[IFSTMT] found if (expr) stmts at line %d\n", yylineno);
     }
-    | IF PAREN_OPEN expr PAREN_CLOSE stmts ELSE stmts {
+    | ifprefix stmt elseprefix stmt {
+        quads->patchLabel($1, $3 + 1);
+        quads->patchLabel($3, quads->nextQuad());
         printf("[IFSTMT] found if (expr) stmts else stmts at line %d\n", yylineno);
     }
     ;
@@ -779,8 +781,16 @@ ifprefix:
 
         quads->emit(if_eq_op, $3, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
         $$ = quads->nextQuad();
-        quads->emit(jump_op, nullptr, nullptr, nullptr, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
+    ;
+
+elseprefix:
+    ELSE {
+        $$ = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
+    ;
 
 whilestmt:
     WHILE { whileScopeCount++; } PAREN_OPEN expr PAREN_CLOSE stmts { whileScopeCount--; printf("[WHILESTMT] found while (expr) stmts at line %d\n", yylineno);}

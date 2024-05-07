@@ -57,6 +57,10 @@ void Quad::setLabel(unsigned label) {
 }
 
 void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line) {
+    if (label == 0) {
+        label = this->nextQuad();
+    }
+
     Quad* quad = new Quad(code, result, arg1, arg2, label, line);
 
     this->quads.push_back(quad);

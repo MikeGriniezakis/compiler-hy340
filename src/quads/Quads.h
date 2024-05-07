@@ -16,7 +16,8 @@ enum iopcode {
     tablegetelem_op, add_op, div_op, and_op,
     if_eq_op, if_greatereq_op, call_op, getretval_op,
     tablecreate_op, tablesetelem_op, sub_op, mod_op,
-    or_op, if_noteq_op, if_less_op, param_op, funcstart_op
+    or_op, if_noteq_op, if_less_op, param_op, funcstart_op,
+    jump_op
 };
 
 inline std::string iopCodesLabels[] = {
@@ -25,7 +26,8 @@ inline std::string iopCodesLabels[] = {
     "tablegetelem", "add", "div", "and",
     "if_eq", "if_greatereq", "call", "getretval",
     "tablecreate", "tablesetelem", "sub", "mod",
-    "or", "if_noteq", "if_less", "param", "funcstart"
+    "or", "if_noteq", "if_less", "param", "funcstart",
+    "jump"
 };
 
 enum expr_t {
