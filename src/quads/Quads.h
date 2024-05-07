@@ -79,6 +79,8 @@ public:
     iopcode getCode() { return code; }
     unsigned getLabel() { return label; }
     unsigned getLine() { return line; }
+
+    void setLabel(unsigned label);
 };
 
 class Quads {
@@ -96,8 +98,10 @@ public:
     expr* makeMember(expr* lvalue, char* name, unsigned line, int offset);
     expr* makeCall(expr* call, expr* elist, unsigned line, int offset);
 
+    void patchLabel(unsigned quad, unsigned label);
     bool checkArithmeticExpression(const expr* first, const expr* second);
     bool checkArithmeticExpression(const expr* expr);
+    unsigned nextQuad();
 };
 
 #endif //QUADS_H

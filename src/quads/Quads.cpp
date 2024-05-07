@@ -52,6 +52,11 @@ void Quad::print() {
     printf("%s\n", ss.str().c_str());
 }
 
+void Quad::setLabel(unsigned label) {
+    this->label = label;
+}
+
+
 void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned line) {
     Quad* quad = new Quad(code, result, arg1, arg2, this->quads.size(), line);
 
@@ -135,4 +140,12 @@ SymbolStruct* Quads::createTemp(int offset) {
     this->symbolTable->insertSymbol(temp->name, 0, false, false, 0, offset);
 
     return temp;
+}
+
+unsigned Quads::nextQuad() {
+    return this->quads.size();
+}
+
+void Quads::patchLabel(unsigned quad, unsigned label) {
+    this->quads[quad]->setLabel(label);
 }

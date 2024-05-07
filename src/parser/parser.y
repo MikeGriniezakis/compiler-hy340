@@ -135,7 +135,7 @@
 %type <expr> indexedelem_list
 %type <expr> indexedelem
 %type <expr> indexed
-%type <expr> ifprefix
+%type <intValue> ifprefix
 %type <expr> elseprefix
 %type <expr> whilestart
 %type <expr> returnstmt
@@ -763,9 +763,24 @@ idlist:
     ;
 
 ifstmt:
-    IF PAREN_OPEN expr PAREN_CLOSE stmts { printf("[IFSTMT] found if (expr) stmts at line %d\n", yylineno); }
-    | IF PAREN_OPEN expr PAREN_CLOSE stmts ELSE stmts { printf("[IFSTMT] found if (expr) stmts else stmts at line %d\n", yylineno); }
+    ifprefix stmts {
+        quads->patchLabel($1, quads->nextQuad());
+        printf("[IFSTMT] found if (expr) stmts at line %d\n", yylineno);
+    }
+    | IF PAREN_OPEN expr PAREN_CLOSE stmts ELSE stmts {
+        printf("[IFSTMT] found if (expr) stmts else stmts at line %d\n", yylineno);
+    }
     ;
+
+ifprefix:
+    IF PAREN_OPEN expr PAREN_CLOSE {
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        quads->emit(if_eq_op, $3, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        $$ = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, yylineno);
+    }
 
 whilestmt:
     WHILE { whileScopeCount++; } PAREN_OPEN expr PAREN_CLOSE stmts { whileScopeCount--; printf("[WHILESTMT] found while (expr) stmts at line %d\n", yylineno);}
