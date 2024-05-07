@@ -89,7 +89,7 @@ public:
     Quads(SymbolTable* symbolTable) : tempCounter(0), symbolTable(symbolTable) {}
 
     SymbolStruct* createTemp(int offset);
-    void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
+    void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned line);
     expr* emitIfTableItem(expr *result, unsigned line, int offset);
     void printQuads();
     expr* newExpr(expr_t type);

@@ -180,7 +180,7 @@ expr:
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(add_op, $$, $1, $3, 0, yylineno);
+        quads->emit(add_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr + expr at line %d\n", yylineno);
     }
     | expr MINUS expr {
@@ -190,7 +190,7 @@ expr:
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(uminus_op, $$, $1, $3, 0, yylineno);
+        quads->emit(uminus_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr - expr at line %d\n", yylineno);
     }
     | expr MULT expr {
@@ -200,7 +200,7 @@ expr:
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(mul_op, $$, $1, $3, 0, yylineno);
+        quads->emit(mul_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr * expr at line %d\n", yylineno);
     }
     | expr DIV expr {
@@ -210,7 +210,7 @@ expr:
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(div_op, $$, $1, $3, 0, yylineno);
+        quads->emit(div_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr / expr at line %d\n", yylineno);
     }
     | expr MOD expr {
@@ -220,7 +220,7 @@ expr:
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(mod_op, $$, $1, $3, 0, yylineno);
+        quads->emit(mod_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr % expr at line %d\n", yylineno);
     }
     | expr GT expr  {
@@ -230,7 +230,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_greater_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
     | expr GE expr {
@@ -240,7 +240,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_greatereq_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr >= expr at line %d\n", yylineno);
     }
     | expr LT expr {
@@ -250,7 +250,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_less_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr < expr at line %d\n", yylineno);
     }
     | expr LE expr {
@@ -260,7 +260,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_lesseq_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr <= expr at line %d\n", yylineno);
     }
     | expr EQUAL expr {
@@ -270,7 +270,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_eq_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr == expr at line %d\n", yylineno);
     }
     | expr DIFF expr {
@@ -280,7 +280,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_noteq_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr != expr at line %d\n", yylineno);
     }
     | expr AND expr {
@@ -290,7 +290,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(and_op, $$, $1, $3, 0, yylineno);
+        quads->emit(and_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
     }
     | expr OR expr {
@@ -300,7 +300,7 @@ expr:
         }
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(or_op, $$, $1, $3, 0, yylineno);
+        quads->emit(or_op, $$, $1, $3, yylineno);
         printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
     | term { $$ = $1; printf("[EXPR] found term at line %d\n", yylineno); }
@@ -309,15 +309,15 @@ expr:
 assignexpr:
     lvalue ASSIGN expr {
         if ($1->type == tableitem_e) {
-            quads->emit(tablesetelem_op, $1, $1->index, $3, 0, yylineno);
+            quads->emit(tablesetelem_op, $1, $1->index, $3, yylineno);
 
             $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
             $$->type = assignexpr_e;
         } else {
-            quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
+            quads->emit(assign_op, $1, $3, nullptr, yylineno);
             $$ = quads->newExpr(assignexpr_e);
             $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
+            quads->emit(assign_op, $$, $1, nullptr, yylineno);
             insertToken($1->symbol, false);
         }
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
@@ -330,13 +330,13 @@ term:
         quads->checkArithmeticExpression($2);
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(uminus_op, $$, $2, nullptr, 0, yylineno);
+        quads->emit(uminus_op, $$, $2, nullptr, yylineno);
         printf("[TERM] found -expr at line %d\n", yylineno);
     }
     | NOT expr {
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(not_op, $$, $2, nullptr, 0, yylineno);
+        quads->emit(not_op, $$, $2, nullptr, yylineno);
         printf("[TERM] found !expr at line %d\n", yylineno);
     }
     | INC lvalue {
@@ -346,13 +346,13 @@ term:
 
         if ($2->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($2, yylineno, offsets[symbolTable->getScope()]++);
-            quads->emit(add_op, temp, temp, addExpr, 0, yylineno);
-            quads->emit(tablesetelem_op, $2, $2->index, temp, 0, yylineno);
+            quads->emit(add_op, temp, temp, addExpr, yylineno);
+            quads->emit(tablesetelem_op, $2, $2->index, temp, yylineno);
         } else {
-            quads->emit(add_op, $2, $2, addExpr, 0, yylineno);
+            quads->emit(add_op, $2, $2, addExpr, yylineno);
             $$ = quads->newExpr(arithexpr_e);
             $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, $2, nullptr, 0, yylineno);
+            quads->emit(assign_op, $$, $2, nullptr, yylineno);
         }
 
         printf("[TERM] found ++lvalue at line %d\n", yylineno);
@@ -367,12 +367,12 @@ term:
 
         if ($1->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, temp, nullptr, 0, yylineno);
-            quads->emit(add_op, temp, temp, addExpr, 0, yylineno);
-            quads->emit(tablesetelem_op, $1, $1->index, temp, 0, yylineno);
+            quads->emit(assign_op, $$, temp, nullptr, yylineno);
+            quads->emit(add_op, temp, temp, addExpr, yylineno);
+            quads->emit(tablesetelem_op, $1, $1->index, temp, yylineno);
         } else {
-            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
-            quads->emit(add_op, $1, $1, addExpr, 0, yylineno);
+            quads->emit(assign_op, $$, $1, nullptr, yylineno);
+            quads->emit(add_op, $1, $1, addExpr, yylineno);
         }
 
         printf("[TERM] found lvalue++ at line %d\n", yylineno);
@@ -384,13 +384,13 @@ term:
 
         if ($2->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($2, yylineno, offsets[symbolTable->getScope()]++);
-            quads->emit(sub_op, temp, temp, decExpr, 0, yylineno);
-            quads->emit(tablesetelem_op, $2, $2->index, temp, 0, yylineno);
+            quads->emit(sub_op, temp, temp, decExpr, yylineno);
+            quads->emit(tablesetelem_op, $2, $2->index, temp, yylineno);
         } else {
-            quads->emit(sub_op, $2, $2, decExpr, 0, yylineno);
+            quads->emit(sub_op, $2, $2, decExpr, yylineno);
             $$ = quads->newExpr(arithexpr_e);
             $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, $2, nullptr, 0, yylineno);
+            quads->emit(assign_op, $$, $2, nullptr, yylineno);
         }
 
         printf("[TERM] found --lvalue at line %d\n", yylineno);
@@ -405,12 +405,12 @@ term:
 
         if ($1->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
-            quads->emit(assign_op, $$, temp, nullptr, 0, yylineno);
-            quads->emit(sub_op, temp, temp, decExpr, 0, yylineno);
-            quads->emit(tablesetelem_op, $1, $1->index, temp, 0, yylineno);
+            quads->emit(assign_op, $$, temp, nullptr, yylineno);
+            quads->emit(sub_op, temp, temp, decExpr, yylineno);
+            quads->emit(tablesetelem_op, $1, $1->index, temp, yylineno);
         } else {
-            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
-            quads->emit(sub_op, $1, $1, decExpr, 0, yylineno);
+            quads->emit(assign_op, $$, $1, nullptr, yylineno);
+            quads->emit(sub_op, $1, $1, decExpr, yylineno);
         }
 
         printf("[TERM] found lvalue-- at line %d\n", yylineno);
@@ -615,11 +615,11 @@ objectdef:
         $$ = quads->newExpr(newtable_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
 
-        quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
+        quads->emit(tablecreate_op, $$, nullptr, nullptr, yylineno);
         for (int i = 0; $elist; $elist = $elist->next) {
             expr* elist_expr = quads->newExpr(constnum_e);
             elist_expr->numConst = i++;
-            quads->emit(tablesetelem_op, $$, elist_expr, $elist, 0, yylineno);
+            quads->emit(tablesetelem_op, $$, elist_expr, $elist, yylineno);
         }
 
         printf("[OBJECTDEF] found [elist] at line %d\n", yylineno);
@@ -628,14 +628,14 @@ objectdef:
         $$ = quads->newExpr(newtable_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
 
-        quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
+        quads->emit(tablecreate_op, $$, nullptr, nullptr, yylineno);
         expr* index = $indexed;
         while (true) {
             if (index == nullptr) {
                 break;
             }
 
-            quads->emit(tablesetelem_op, $$, index->index, index, 0, yylineno);
+            quads->emit(tablesetelem_op, $$, index->index, index, yylineno);
 
             index = index->next;
         }
@@ -683,14 +683,14 @@ funcdef:
         Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
         $<expr>$ = quads->newExpr(libraryfunc_e);
         $<expr>$->symbol = symbol->toStruct();
-        quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
+        quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, yylineno);
         isScopeIncreasedByFunction = true;
         symbolTable->incScope();
         if (offsets.size()-1 < symbolTable->getScope()) {
             offsets.push_back(0);
         }
     } idlist PAREN_CLOSE block {
-        quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+        quads->emit(funcend_op, $<expr>4, nullptr, nullptr, yylineno);
         functionScopeCount--;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     | FUNCTION { functionScopeCount++; isFunction = true; } ID
@@ -708,7 +708,7 @@ funcdef:
          }
          $<expr>$ = quads->newExpr(libraryfunc_e);
          $<expr>$->symbol = symbol->toStruct();
-         quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
+         quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, yylineno);
 
          isFunction = false;
      }
@@ -720,7 +720,7 @@ funcdef:
          }
      } idlist PAREN_CLOSE block {
          functionScopeCount--;
-         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, yylineno);
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     ;
 
@@ -777,10 +777,10 @@ forstmt:
 
 returnstmt:
     RETURN { if (functionScopeCount == 0) { yyerror("Return must be used inside a function"); } } expr SEMICOLON {
-        quads->emit(ret_op, nullptr, $3, nullptr, 0, yylineno);
+        quads->emit(ret_op, nullptr, $3, nullptr, yylineno);
         printf("[RETURNSTMT] found return expr; at line %d\n", yylineno);
     }
-    | RETURN SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno); }
+    | RETURN SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, yylineno); }
     ;
 
 %%

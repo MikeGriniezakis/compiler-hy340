@@ -52,8 +52,8 @@ void Quad::print() {
     printf("%s\n", ss.str().c_str());
 }
 
-void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line) {
-    Quad* quad = new Quad(code, result, arg1, arg2, label, line);
+void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned line) {
+    Quad* quad = new Quad(code, result, arg1, arg2, this->quads.size(), line);
 
     this->quads.push_back(quad);
 }
@@ -91,7 +91,7 @@ expr* Quads::emitIfTableItem(expr* expr, unsigned line, int offset) {
     auto res = this->newExpr(var_e);
     res->symbol = this->createTemp(offset);
 
-    emit(tablegetelem_op, res, expr, expr->index, 0, line);
+    emit(tablegetelem_op, res, expr, expr->index, line);
 
     return res;
 }
@@ -112,14 +112,14 @@ expr* Quads::makeCall(expr* call, expr* elist, unsigned line, int offset) {
 
     expr* arg = elist;
     while (arg != nullptr) {
-        this->emit(param_op, arg, nullptr, nullptr, 0, line);
+        this->emit(param_op, arg, nullptr, nullptr, line);
         arg = arg->next;
     }
 
-    emit(call_op, func, nullptr, nullptr, 0, line);
+    emit(call_op, func, nullptr, nullptr, line);
     expr* res = this->newExpr(var_e);
     res->symbol = this->createTemp(offset);
-    emit(getretval_op, res, nullptr, nullptr, 0, line);
+    emit(getretval_op, res, nullptr, nullptr, line);
 
     return res;
 }
