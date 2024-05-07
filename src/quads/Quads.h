@@ -53,6 +53,12 @@ struct expr {
     expr* next;
 };
 
+struct call {
+    expr* elist;
+    bool method;
+    char* name;
+};
+
 class Quad {
     iopcode code;
     expr *result;
@@ -88,6 +94,7 @@ public:
     void printQuads();
     expr* newExpr(expr_t type);
     expr* makeMember(expr* lvalue, char* name, unsigned line, int offset);
+    expr* makeCall(expr* call, expr* elist, unsigned line, int offset);
 
     bool checkArithmeticExpression(const expr* first, const expr* second);
     bool checkArithmeticExpression(const expr* expr);

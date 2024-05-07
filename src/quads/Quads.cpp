@@ -107,6 +107,24 @@ expr* Quads::makeMember(expr* lvalue, char* name, unsigned line, int offset) {
     return expr;
 }
 
+expr* Quads::makeCall(expr* call, expr* elist, unsigned line, int offset) {
+    expr* func = this->emitIfTableItem(call, line, offset);
+
+    expr* arg = elist;
+    while (arg != nullptr) {
+        this->emit(param_op, arg, nullptr, nullptr, 0, line);
+        arg = arg->next;
+    }
+
+    emit(call_op, func, nullptr, nullptr, 0, line);
+    expr* res = this->newExpr(var_e);
+    res->symbol = this->createTemp(offset);
+    emit(getretval_op, res, nullptr, nullptr, 0, line);
+
+    return res;
+}
+
+
 SymbolStruct* Quads::createTemp(int offset) {
     auto temp = new SymbolStruct();
     char* name = (char *) malloc(10);

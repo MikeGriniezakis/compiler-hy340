@@ -98,6 +98,7 @@
     bool    boolValue;
     struct SymbolStruct* symbol;
     struct expr* expr;
+    struct call* call;
 }
 
 %token <stringValue> ID
@@ -124,10 +125,10 @@
 %type <expr> const
 %type <expr> member
 %type <expr> funcdef
-%type <expr> methodcall
+%type <call> methodcall
 %type <expr> elist
-%type <expr> callsuffix
-%type <expr> normcall
+%type <call> callsuffix
+%type <call> normcall
 %type <expr> call
 %type <expr> elist_expressions
 %type <expr> objectdef
@@ -531,34 +532,67 @@ member:
     ;
 
 call:
-    call PAREN_OPEN elist PAREN_CLOSE { printf("[CALL] found call(elist) at line %d\n", yylineno); }
+    call PAREN_OPEN elist PAREN_CLOSE {
+        $$ = quads->makeCall($1, $3, yylineno, offsets[symbolTable->getScope()]++);
+        printf("[CALL] found call(elist) at line %d\n", yylineno);
+    }
     | lvalue callsuffix {
         Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name);
 
+        printf("%d\n", existingSymbol == nullptr);
         if (isMethodCall) {
             isMethodCall = false;
-        } else if (existingSymbol == nullptr) {
+        }
+        if (existingSymbol == nullptr) {
             char message[100];
             sprintf(message, "Function %s not defined", $1->symbol->name);
             yyerror(message);
+        } else {
+            $1 = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            if ($2->method) {
+                expr* temp = $1;
+                $1 = quads->emitIfTableItem(quads->makeMember(temp, $2->name, offsets[symbolTable->getScope()]++, yylineno), yylineno, offsets[symbolTable->getScope()]++);
+                temp->next = $2->elist;
+                $2->elist = temp;
+            }
+            $$ = quads->makeCall($1, $2->elist, yylineno, offsets[symbolTable->getScope()]++);
         }
 
         printf("[CALL] found lvalue callsufix at line %d\n", yylineno);
     }
-    | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE { printf("[CALL] found (funcdef)(elist) at line %d\n", yylineno); }
+    | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE {
+        expr* func = quads->newExpr(programfunc_e);
+        func->symbol = $2->symbol;
+        $$ = quads->makeCall(func, $5, yylineno, offsets[symbolTable->getScope()]++);
+        printf("[CALL] found (funcdef)(elist) at line %d\n", yylineno);
+    }
     ;
 
 callsuffix:
-    normcall { printf("[CALLSUFFIX] found normcall at line %d\n", yylineno); }
-    | methodcall { isMethodCall = true; printf("[CALLSUFFIX] found methodcall at line %d\n", yylineno);}
+    normcall {
+        $$ = $1;
+        printf("[CALLSUFFIX] found normcall at line %d\n", yylineno);
+    }
+    | methodcall {
+        $$ = $1;
+        isMethodCall = true; printf("[CALLSUFFIX] found methodcall at line %d\n", yylineno);
+    }
     ;
 
 normcall:
-    PAREN_OPEN elist PAREN_CLOSE { printf("[NORMCALL] found (elist) at line %d\n", yylineno); }
+    PAREN_OPEN elist PAREN_CLOSE {
+        $$->elist = $2;
+        $$->method = false;
+        $$->name = nullptr;
+        printf("[NORMCALL] found (elist) at line %d\n", yylineno);
+    }
     ;
 
 methodcall:
     DOUBLE_DOT ID PAREN_OPEN elist PAREN_CLOSE {
+        $$->elist = $4;
+        $$->method = true;
+        $$->name = $2;
         printf("[METHODCALL] found ..ID(elist) at line %d\n", yylineno);
     }
     ;
