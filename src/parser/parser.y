@@ -1,5 +1,6 @@
 %{
     #include <stdio.h>
+    #include <stack>
     #include <string.h>
     #include <src/symbolTable/SymbolTable.h>
     #include <sstream>
@@ -17,8 +18,7 @@
 
     int functionCount = 0;
     int functionScopeCount = 0;
-    int forScopeCount = 0;
-    int whileScopeCount = 0;
+    int loopScopeCount = 0;
 
     bool isMethodCall = false;
     bool isMemberCall = false;
@@ -27,6 +27,10 @@
 
     std::vector<char*> errors;
     std::vector<int> offsets = {0};
+    std::vector<int> contNumbers = {0};
+    std::vector<int> breakNumbers = {0};
+    std::stack<int> breakStack;
+    std::stack<int> contStack;
 
     void insertToken(struct SymbolStruct* symbol, bool isArgument) {
         Symbol* existingSymbol = nullptr;
@@ -99,6 +103,8 @@
     struct SymbolStruct* symbol;
     struct expr* expr;
     struct call* call;
+    struct forStatement* forStatement;
+    int opcode;
 }
 
 %token <stringValue> ID
@@ -137,8 +143,15 @@
 %type <expr> indexed
 %type <intValue> ifprefix
 %type <intValue> elseprefix
-%type <expr> whilestart
+%type <intValue> whilestart
+%type <intValue> whilecond
 %type <expr> returnstmt
+%type <forStatement> forprefix;
+%type <intValue> M;
+%type <intValue> N;
+%type <opcode> arithmop
+%type <opcode> relop
+%type <opcode> boolop
 
 %%
 
@@ -156,152 +169,106 @@ stmt:
     | whilestmt { printf("[STMT] found whilestmt at line %d\n", yylineno); }
     | forstmt { printf("[STMT] found forstmt at line %d\n", yylineno); }
     | returnstmt { printf("[STMT] found returnstmt at line %d\n", yylineno); }
-    | BREAK {
-        if (forScopeCount == 0 && whileScopeCount == 0) {
-            yyerror("Break must be used inside a loop");
-        }
-    } SEMICOLON { printf("[STMT] found break; at line %d\n", yylineno); }
-    | CONTINUE {
-        if (forScopeCount == 0 && whileScopeCount == 0) {
-            yyerror("Break must be used inside a loop");
-        }
-    } SEMICOLON { printf("[STMT] found continue; at line %d\n", yylineno); }
+    | break { printf("[STMT] found break; at line %d\n", yylineno); }
+    | continue { printf("[STMT] found continue; at line %d\n", yylineno); }
     | block { printf("[STMT] found block at line %d\n", yylineno); }
     | funcdef { printf("[STMT] found funcdef at line %d\n", yylineno); }
     | SEMICOLON { printf("[STMT] found ; at line %d\n", yylineno); }
     ;
 
+break:
+    BREAK {
+        if (loopScopeCount == 0 && loopScopeCount == 0) {
+            yyerror("Break must be used inside a loop");
+        }
+    } SEMICOLON {
+        if (breakNumbers.size()-1 < loopScopeCount) {
+            breakNumbers.push_back(0);
+        }
+        breakNumbers.at(loopScopeCount)++;
+
+        breakStack.push(quads->nextQuad());
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
+    ;
+
+continue:
+    CONTINUE {
+        if (loopScopeCount == 0 && loopScopeCount == 0) {
+            yyerror("Break must be used inside a loop");
+        }
+    } SEMICOLON {
+        if (contNumbers.size()-1 < loopScopeCount) {
+            contNumbers.push_back(0);
+        }
+        contNumbers.at(loopScopeCount)++;
+
+        contStack.push(quads->nextQuad());
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
+    ;
+
+arithmop:
+    PLUS { $$ = add_op; }
+    | MINUS { $$ = sub_op; }
+    | MULT { $$ = mul_op; }
+    | DIV { $$ = div_op; }
+    | MOD { $$ = mod_op; }
+
+relop:
+    GT { $$ = if_greater_op; }
+    | GE { $$ = if_greatereq_op; }
+    | LT { $$ = if_less_op; }
+    | LE { $$ = if_lesseq_op; }
+    | EQUAL { $$ = if_eq_op; }
+    | DIFF { $$ = if_noteq_op; }
+
+boolop:
+    AND { $$ = and_op; }
+    | OR { $$ = or_op; }
+
 expr:
     assignexpr { $$ = $1; printf("[EXPR] found assignexpr at line %d\n", yylineno); }
-    | expr PLUS expr {
+    | expr arithmop expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(add_op, $$, $1, $3, 0, yylineno);
+        quads->emit($2, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr + expr at line %d\n", yylineno);
     }
-    | expr MINUS expr {
+    | expr relop expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
-        $$ = quads->newExpr(arithexpr_e);
+        $$ = quads->newExpr(var_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(uminus_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr - expr at line %d\n", yylineno);
-    }
-    | expr MULT expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(mul_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr * expr at line %d\n", yylineno);
-    }
-    | expr DIV expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(div_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr / expr at line %d\n", yylineno);
-    }
-    | expr MOD expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(mod_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr % expr at line %d\n", yylineno);
-    }
-    | expr GT expr  {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
+
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        expr* falseExpr = quads->newExpr(constbool_e);
+        falseExpr->boolConst = false;
+
+        quads->emit($2, $$, $1, $3, quads->nextQuad() + 3, yylineno);
+        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
+        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
-    | expr GE expr {
+    | expr boolop expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
-        $$ = quads->newExpr(boolexpr_e);
+        $$ = quads->newExpr(var_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr >= expr at line %d\n", yylineno);
-    }
-    | expr LT expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr < expr at line %d\n", yylineno);
-    }
-    | expr LE expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr <= expr at line %d\n", yylineno);
-    }
-    | expr EQUAL expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr == expr at line %d\n", yylineno);
-    }
-    | expr DIFF expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr != expr at line %d\n", yylineno);
-    }
-    | expr AND expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(and_op, $$, $1, $3, 0, yylineno);
+
+        quads->emit($2, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
-    }
-    | expr OR expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        quads->emit(or_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
     | term { $$ = $1; printf("[EXPR] found term at line %d\n", yylineno); }
     ;
@@ -451,7 +418,7 @@ const:
     }
     | TRUE {
         $$ = quads->newExpr(constbool_e);
-        $$->boolConst = false;
+        $$->boolConst = true;
         printf("[CONST] found true at line %d\n", yylineno);
     }
     | FALSE {
@@ -793,11 +760,111 @@ elseprefix:
     ;
 
 whilestmt:
-    WHILE { whileScopeCount++; } PAREN_OPEN expr PAREN_CLOSE stmts { whileScopeCount--; printf("[WHILESTMT] found while (expr) stmts at line %d\n", yylineno);}
+    whilestart {
+        loopScopeCount++;
+        if (contNumbers.size()-1 < loopScopeCount) {
+            contNumbers.push_back(0);
+        }
+
+        if (breakNumbers.size()-1 < loopScopeCount) {
+            breakNumbers.push_back(0);
+        }
+    } whilecond stmt {
+        quads->emit(jump_op, nullptr, nullptr, nullptr, $1, yylineno);
+        quads->patchLabel($3, quads->nextQuad());
+        printf("[WHILESTMT] found while (expr) stmts at line %d\n", yylineno);
+
+        for (int i = 0; i < contNumbers.at(loopScopeCount); i++) {
+            quads->patchLabel(contStack.top(), $3-1);
+            contStack.pop();
+        }
+        contNumbers.at(loopScopeCount) = 0;
+
+        for (int i = 0; i < breakNumbers.at(loopScopeCount); i++) {
+            quads->patchLabel(breakStack.top(), quads->nextQuad());
+            breakStack.pop();
+        }
+        breakNumbers.at(loopScopeCount) = 0;
+
+        loopScopeCount--;
+    }
+    ;
+
+whilestart:
+    WHILE {
+        $$ = quads->nextQuad();
+    }
+    ;
+
+whilecond:
+    PAREN_OPEN expr PAREN_CLOSE {
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        quads->emit(if_eq_op, $2, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        $$ = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
     ;
 
 forstmt:
-    FOR { forScopeCount++; } PAREN_OPEN elist SEMICOLON expr SEMICOLON elist PAREN_CLOSE stmts { forScopeCount--; printf("[FORSTMT] found for (elist; expr; elist) stmts at line %d\n", yylineno);}
+    forprefix N elist PAREN_CLOSE N stmts N {
+        quads->patchLabel($1->enter, $5 + 1);
+        quads->patchLabel($2, quads->nextQuad());
+        quads->patchLabel($5, $1->test);
+        quads->patchLabel($7, $2 + 1);
+
+        for (int i = 0; i < contNumbers.at(loopScopeCount); i++) {
+            quads->patchLabel(contStack.top(), $1->test);
+            contStack.pop();
+        }
+        contNumbers.at(loopScopeCount) = 0;
+
+        for (int i = 0; i < breakNumbers.at(loopScopeCount); i++) {
+            quads->patchLabel(breakStack.top(), quads->nextQuad());
+            breakStack.pop();
+        }
+        breakNumbers.at(loopScopeCount) = 0;
+
+        loopScopeCount--;
+
+        printf("[FORSTMT] found for (elist; expr; elist) stmts at line %d\n", yylineno);
+    }
+    ;
+
+forprefix:
+    FOR {
+        loopScopeCount++;
+        if (contNumbers.size()-1 < loopScopeCount) {
+            contNumbers.push_back(0);
+        }
+        if (breakNumbers.size()-1 < loopScopeCount) {
+            breakNumbers.push_back(0);
+        }
+    } PAREN_OPEN elist SEMICOLON M expr SEMICOLON
+    {
+        $$ = new struct forStatement();
+        $$->test = $6;
+        $$->enter = quads->nextQuad();
+
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        quads->emit(if_eq_op, $7, trueExpr, nullptr, $6, yylineno);
+    }
+    ;
+
+N:
+    {
+        $$ = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
+    ;
+
+M:
+    {
+        $$ = quads->nextQuad();
+    }
     ;
 
 returnstmt:

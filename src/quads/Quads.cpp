@@ -47,7 +47,9 @@ void Quad::print() {
     printExpr(&ss, this->result);
     printExpr(&ss, this->arg1);
     printExpr(&ss, this->arg2);
-    ss << this->label << "\t";
+    if (this->label != 0) {
+        ss << this->label << "\t";
+    }
 
     printf("%s\n", ss.str().c_str());
 }
@@ -57,14 +59,19 @@ void Quad::setLabel(unsigned label) {
 }
 
 void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line) {
-    if (label == 0) {
-        label = this->nextQuad();
-    }
-
     Quad* quad = new Quad(code, result, arg1, arg2, label, line);
 
     this->quads.push_back(quad);
 }
+
+void Quads::emit(int code, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line) {
+    auto opcode = static_cast<iopcode>(code);
+
+    Quad* quad = new Quad(opcode, result, arg1, arg2, label, line);
+
+    this->quads.push_back(quad);
+}
+
 
 expr* Quads::newExpr(expr_t type) {
     auto expr = new struct expr;
@@ -152,3 +159,40 @@ unsigned Quads::nextQuad() {
 void Quads::patchLabel(unsigned quad, unsigned label) {
     this->quads[quad]->setLabel(label);
 }
+
+// void Quads::patchList(int list, int label) {
+//     while (list) {
+//         int next = this->quads.at(list)->getLabel();
+//         quads.at(list)->setLabel(label);
+//         list = next;
+//     }
+// }
+//
+// statement* Quads::makeStatement() {
+//     auto* statement = new struct statement();
+//
+//     return statement;
+// }
+//
+// int Quads::newList(int quad) {
+//     this->quads.at(quad)->setLabel(0);
+//     return quad;
+// }
+//
+// int Quads::mergeList(int list1, int list2) {
+//     if (!list1) {
+//         return list2;
+//     }
+//
+//     if (!list2) {
+//         return list1;
+//     }
+//
+//     int i = list1;
+//     while (this->quads.at(i)->getLabel()) {
+//         i = this->quads.at(i)->getLabel();
+//     }
+//
+//     this->quads.at(i)->setLabel(list2);
+//     return list1;
+// }
