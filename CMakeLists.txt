@@ -7,7 +7,7 @@ find_package(BISON REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 
 FLEX_TARGET(scanner src/scanner/scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
-BISON_TARGET(parser src/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
+BISON_TARGET(parser src/parser/parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp COMPILE_FLAGS "--verbose")
 
 include_directories(src/symbol src/symbolTable)
 

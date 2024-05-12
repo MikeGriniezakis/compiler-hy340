@@ -16,7 +16,6 @@ void printExpr(std::stringstream* ss, expr* expr) {
         case constnum_e:
             *ss << expr->numConst << "\t";
             break;
-        case boolexpr_e:
         case constbool_e:
             if (expr->boolConst) {
                 *ss << "true\t";
@@ -160,14 +159,14 @@ void Quads::patchLabel(unsigned quad, unsigned label) {
     this->quads[quad]->setLabel(label);
 }
 
-// void Quads::patchList(int list, int label) {
-//     while (list) {
-//         int next = this->quads.at(list)->getLabel();
-//         quads.at(list)->setLabel(label);
-//         list = next;
-//     }
-// }
-//
+void Quads::patchList(int list, int label) {
+    while (list) {
+        int next = this->quads.at(list)->getLabel();
+        quads.at(list)->setLabel(label);
+        list = next;
+    }
+}
+
 // statement* Quads::makeStatement() {
 //     auto* statement = new struct statement();
 //
@@ -179,20 +178,19 @@ void Quads::patchLabel(unsigned quad, unsigned label) {
 //     return quad;
 // }
 //
-// int Quads::mergeList(int list1, int list2) {
-//     if (!list1) {
-//         return list2;
-//     }
-//
-//     if (!list2) {
-//         return list1;
-//     }
-//
-//     int i = list1;
-//     while (this->quads.at(i)->getLabel()) {
-//         i = this->quads.at(i)->getLabel();
-//     }
-//
-//     this->quads.at(i)->setLabel(list2);
-//     return list1;
-// }
+int Quads::mergeLists(int list1, int list2) {
+    if (!list1) {
+        return list2;
+    }
+
+    if (!list2) {
+        return list1;
+    }
+
+    int i = list1;
+    while (this->quads.at(i)->getLabel())
+        i = this->quads.at(i)->getLabel();
+
+    this->quads.at(i)->setLabel(list2);
+    return list1;
+}
