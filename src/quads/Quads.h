@@ -53,6 +53,8 @@ struct expr {
     char* strConst;
     bool boolConst;
     expr* next;
+    int trueList;
+    int falseList;
 };
 
 struct call {
@@ -97,6 +99,7 @@ class Quads {
 public:
     Quads(SymbolTable* symbolTable) : tempCounter(0), symbolTable(symbolTable) {}
 
+    void resetTempCounter() { tempCounter = 0; }
     SymbolStruct* createTemp(int offset);
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
     void emit(int code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
@@ -110,6 +113,8 @@ public:
     bool checkArithmeticExpression(const expr* first, const expr* second);
     bool checkArithmeticExpression(const expr* expr);
     unsigned nextQuad();
+    void patchList(int list, int label);
+    int mergeLists(int list1, int list2);
 };
 
 #endif //QUADS_H
