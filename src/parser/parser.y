@@ -165,7 +165,10 @@ stmts:
     ;
 
 stmt:
-    expr SEMICOLON { quads->resetTempCounter(); printf("[STMT] found expr; at line %d\n", yylineno); }
+    expr SEMICOLON {
+        quads->resetTempCounter();
+        printf("[STMT] found expr; at line %d\n", yylineno);
+    }
     | ifstmt { printf("[STMT] found ifstmt at line %d\n", yylineno); }
     | whilestmt { printf("[STMT] found whilestmt at line %d\n", yylineno); }
     | forstmt { printf("[STMT] found forstmt at line %d\n", yylineno); }
@@ -210,7 +213,10 @@ continue:
     ;
 
 expr:
-    assignexpr { $$ = $1; printf("[EXPR] found assignexpr at line %d\n", yylineno); }
+    assignexpr {
+        $$ = $1;
+        printf("[EXPR] found assignexpr at line %d\n", yylineno);
+    }
     | expr PLUS expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
             yyerror("Arithmetic expression must be of the same type");
@@ -229,7 +235,7 @@ expr:
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(sub_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr + expr at line %d\n", yylineno);
+        printf("[EXPR] found expr - expr at line %d\n", yylineno);
     }
     | expr MULT expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -239,7 +245,7 @@ expr:
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(mul_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr + expr at line %d\n", yylineno);
+        printf("[EXPR] found expr * expr at line %d\n", yylineno);
     }
     | expr DIV expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -249,7 +255,7 @@ expr:
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(div_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr + expr at line %d\n", yylineno);
+        printf("[EXPR] found expr / expr at line %d\n", yylineno);
     }
     | expr MOD expr {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -259,7 +265,7 @@ expr:
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
         quads->emit(mod_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr + expr at line %d\n", yylineno);
+        printf("[EXPR] found expr % expr at line %d\n", yylineno);
     }
     | expr GT expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -299,7 +305,7 @@ expr:
         quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
         quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
         quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
-        printf("[EXPR] found expr > expr at line %d\n", yylineno);
+        printf("[EXPR] found expr >= expr at line %d\n", yylineno);
     }
     | expr LT expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -315,11 +321,12 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_less_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
-        printf("[EXPR] found expr > expr at line %d\n", yylineno);
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
+        quads->emit(if_less_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        printf("[EXPR] found expr < expr at line %d\n", yylineno);
     }
     | expr LE expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -335,11 +342,9 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_lesseq_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
-        printf("[EXPR] found expr > expr at line %d\n", yylineno);
+        quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        printf("[EXPR] found expr <= expr at line %d\n", yylineno);
     }
     | expr EQUAL expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -381,26 +386,38 @@ expr:
         quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
-    | expr OR expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
+    | expr OR M expr {
+        if (!quads->checkArithmeticExpression($1, $4)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
+
+        for (int quad : $1->falseList) {
+            quads->patchLabel(quad, $3);
+        }
+
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->falseList = $4->falseList;
+        $$->trueList = quads->merge($1->trueList, $4->trueList);
 
-        quads->emit(or_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr AND expr at line %d\n", yylineno);
+        printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
-    | expr AND expr {
-        if (!quads->checkArithmeticExpression($1, $3)) {
+    | expr AND M expr {
+        if (!quads->checkArithmeticExpression($1, $4)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
+
+        for (int quad : $1->trueList) {
+            quads->patchLabel(quad, $3);
+        }
+
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->trueList = $4->trueList;
+        $$->falseList = quads->merge($1->falseList, $4->falseList);
 
-        quads->emit(and_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
     }
     | term { $$ = $1; printf("[EXPR] found term at line %d\n", yylineno); }
@@ -408,6 +425,32 @@ expr:
 
 assignexpr:
     lvalue ASSIGN expr {
+        if ($3->type == boolexpr_e) {
+            int trueQuad = quads->nextQuad();
+            int falseQuad = quads->nextQuad()+2;
+
+            expr* trueExpr = quads->newExpr(constbool_e);
+            trueExpr->boolConst = true;
+
+            expr* falseExpr = quads->newExpr(constbool_e);
+            falseExpr->boolConst = false;
+
+            quads->emit(assign_op, $3, trueExpr, nullptr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, falseQuad + 1, yylineno);
+            quads->emit(assign_op, $3, falseExpr, nullptr, 0, yylineno);
+
+            for (int quad : $3->trueList) {
+                quads->patchLabel(quad, trueQuad);
+            }
+
+            for (int quad : $3->falseList) {
+                quads->patchLabel(quad, falseQuad);
+            }
+
+            trueList.clear();
+            falseList.clear();
+        }
+
         if ($1->type == tableitem_e) {
             quads->emit(tablesetelem_op, $1, $1->index, $3, 0, yylineno);
 
@@ -420,6 +463,7 @@ assignexpr:
             //quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
             insertToken($1->symbol, false);
         }
+
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
     }
     ;
@@ -436,8 +480,6 @@ term:
     | NOT expr {
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        $$->trueList = $2->falseList;
-        $$->falseList = $2->trueList;
         quads->emit(not_op, $$, $2, nullptr, 0, yylineno);
         printf("[TERM] found !expr at line %d\n", yylineno);
     }

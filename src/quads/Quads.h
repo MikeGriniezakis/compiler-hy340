@@ -53,8 +53,8 @@ struct expr {
     char* strConst;
     bool boolConst;
     expr* next;
-    int trueList;
-    int falseList;
+    std::vector<int> trueList;
+    std::vector<int> falseList;
 };
 
 struct call {
@@ -114,7 +114,7 @@ public:
     bool checkArithmeticExpression(const expr* expr);
     unsigned nextQuad();
     void patchList(int list, int label);
-    int mergeLists(int list1, int list2);
+    std::vector<int> merge(std::vector<int> list1, std::vector<int> list2);
 };
 
 #endif //QUADS_H

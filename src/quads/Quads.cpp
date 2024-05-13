@@ -167,30 +167,9 @@ void Quads::patchList(int list, int label) {
     }
 }
 
-// statement* Quads::makeStatement() {
-//     auto* statement = new struct statement();
-//
-//     return statement;
-// }
-//
-// int Quads::newList(int quad) {
-//     this->quads.at(quad)->setLabel(0);
-//     return quad;
-// }
-//
-int Quads::mergeLists(int list1, int list2) {
-    if (!list1) {
-        return list2;
-    }
+std::vector<int> Quads::merge(std::vector<int> list1, std::vector<int> list2) {
+    std::vector<int> mergedList = list1;
+    mergedList.insert(mergedList.end(), list2.begin(), list2.end());
 
-    if (!list2) {
-        return list1;
-    }
-
-    int i = list1;
-    while (this->quads.at(i)->getLabel())
-        i = this->quads.at(i)->getLabel();
-
-    this->quads.at(i)->setLabel(list2);
-    return list1;
+    return mergedList;
 }
