@@ -281,10 +281,11 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_greater_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
+        quads->emit(if_greater_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
     | expr GE expr  {
@@ -301,10 +302,11 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_greatereq_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
+        quads->emit(if_greatereq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr >= expr at line %d\n", yylineno);
     }
     | expr LT expr  {
@@ -342,6 +344,9 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
         quads->emit(if_lesseq_op, $$, $1, $3, 0, yylineno);
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr <= expr at line %d\n", yylineno);
@@ -360,10 +365,11 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_eq_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
+        quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
     | expr DIFF expr  {
@@ -380,43 +386,85 @@ expr:
         expr* falseExpr = quads->newExpr(constbool_e);
         falseExpr->boolConst = false;
 
-        quads->emit(if_noteq_op, $$, $1, $3, quads->nextQuad() + 3, yylineno);
-        quads->emit(assign_op, $$, falseExpr, nullptr, 0, yylineno);
-        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
-        quads->emit(assign_op, $$, trueExpr, nullptr, 0, yylineno);
+        $$->trueList.push_back(quads->nextQuad());
+        $$->falseList.push_back(quads->nextQuad() + 1);
+
+        quads->emit(if_noteq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
-    | expr OR M expr {
-        if (!quads->checkArithmeticExpression($1, $4)) {
+    | expr {
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($1->type != boolexpr_e) {
+            $1->trueList.push_back(quads->nextQuad());
+            $1->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $1, trueExpr, quads->nextQuad() + 2, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+    } OR M expr {
+        if (!quads->checkArithmeticExpression($1, $5)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
 
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($5->type != boolexpr_e) {
+            $5->trueList.push_back(quads->nextQuad());
+            $5->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $5, trueExpr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+
+
         for (int quad : $1->falseList) {
-            quads->patchLabel(quad, $3);
+            quads->patchLabel(quad, $4);
         }
 
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        $$->falseList = $4->falseList;
-        $$->trueList = quads->merge($1->trueList, $4->trueList);
+        $$->falseList = $5->falseList;
+        $$->trueList = quads->merge($1->trueList, $5->trueList);
 
         printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
-    | expr AND M expr {
-        if (!quads->checkArithmeticExpression($1, $4)) {
+    | expr {
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($1->type != boolexpr_e) {
+            $1->trueList.push_back(quads->nextQuad());
+            $1->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $1, trueExpr, quads->nextQuad() + 2, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+    } AND M expr {
+        if (!quads->checkArithmeticExpression($1, $5)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
 
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($5->type != boolexpr_e) {
+            $5->trueList.push_back(quads->nextQuad());
+            $5->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $5, trueExpr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+
         for (int quad : $1->trueList) {
-            quads->patchLabel(quad, $3);
+            quads->patchLabel(quad, $4);
         }
 
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        $$->trueList = $4->trueList;
-        $$->falseList = quads->merge($1->falseList, $4->falseList);
+        $$->trueList = $5->trueList;
+        $$->falseList = quads->merge($1->falseList, $5->falseList);
 
         printf("[EXPR] found expr AND expr at line %d\n", yylineno);
     }
@@ -446,9 +494,6 @@ assignexpr:
             for (int quad : $3->falseList) {
                 quads->patchLabel(quad, falseQuad);
             }
-
-            trueList.clear();
-            falseList.clear();
         }
 
         if ($1->type == tableitem_e) {
@@ -480,6 +525,8 @@ term:
     | NOT expr {
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->trueList = $2->falseList;
+        $$->falseList = $2->trueList;
         quads->emit(not_op, $$, $2, nullptr, 0, yylineno);
         printf("[TERM] found !expr at line %d\n", yylineno);
     }
