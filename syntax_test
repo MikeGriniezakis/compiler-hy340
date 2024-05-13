@@ -1,7 +1,1 @@
-x = true;
-
-if (x = true) {
-    x = false;
-}
-
-print(x);
+x = a < b or c < d and e < f;
