@@ -4,34 +4,32 @@
 
 #include "Quads.h"
 #include <cstring>
+#include <iostream>
+#include <iomanip>
 #include <sstream>
 
 void printExpr(std::stringstream* ss, expr* expr) {
     if (expr == nullptr) {
-        *ss << "\t";
+        *ss << std::setw(15) <<  " ";
         return;
     }
 
     switch (expr->type) {
         case constnum_e:
-            *ss << expr->numConst << "\t";
+            *ss << std::setw(15) << expr->numConst;
             break;
         case constbool_e:
-            if (expr->boolConst) {
-                *ss << "true\t";
-            } else {
-                *ss << "false\t";
-            }
+            *ss << std::setw(15) << (expr->boolConst ? "true" : "false");
             break;
         case conststring_e:
-            *ss << expr->strConst << "\t";
+            *ss << std::setw(15) << expr->strConst;
             break;
         case nil_e:
-            *ss << "nil\t";
+            *ss << std::setw(15) << "nil";
             break;
         default:
             if (expr->symbol != nullptr) {
-                *ss << expr->symbol->name << "\t";
+                *ss << std::setw(15) << expr->symbol->name;
             } else {
                 fprintf(stderr, "Error: Symbol with type %s is null\n", iopCodesLabels[expr->type].c_str());
             }
@@ -42,12 +40,12 @@ void printExpr(std::stringstream* ss, expr* expr) {
 void Quad::print() {
     std::stringstream ss;
 
-    ss << iopCodesLabels[this->code].c_str() << "\t";
+    ss << std::setw(15) << iopCodesLabels[this->code].c_str();
     printExpr(&ss, this->result);
     printExpr(&ss, this->arg1);
     printExpr(&ss, this->arg2);
     if (this->label != 0) {
-        ss << this->label << "\t";
+        ss << std::setw(15) << this->label;
     }
 
     printf("%s\n", ss.str().c_str());
@@ -80,10 +78,11 @@ expr* Quads::newExpr(expr_t type) {
 }
 
 void Quads::printQuads() {
-    printf("\n\nQuad#\tOpcode\tResult\tArg1\tArg2\tLabel\n");
+    std::cout << std::setw(4) << "Quad#" << std::setw(15) << "Opcode" << std::setw(15) << "Result" << std::setw(15) <<
+            "Arg1" << std::setw(15) << "Arg2" << std::setw(15) << "Label" << std::endl;
     for (int i = 0; i < this->quads.size(); i++) {
         auto quad = this->quads[i];
-        printf("%d\t", i);
+        std::cout << std::setw(4) << i;
         quad->print();
     }
 }
