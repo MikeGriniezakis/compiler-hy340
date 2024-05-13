@@ -393,63 +393,7 @@ expr:
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
-    | expr OR M expr {
-        if (!quads->checkArithmeticExpression($1, $4)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-
-        expr* trueExpr = quads->newExpr(constbool_e);
-        trueExpr->boolConst = true;
-
-        if ($4->type != boolexpr_e) {
-            $4->trueList.push_back(quads->nextQuad());
-            $4->falseList.push_back(quads->nextQuad() + 1);
-            quads->emit(if_eq_op, nullptr, $4, trueExpr, 0, yylineno);
-            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
-        }
-
-
-        for (int quad : $1->falseList) {
-            quads->patchLabel(quad, $3);
-        }
-
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        $$->falseList = $4->falseList;
-        $$->trueList = quads->merge($1->trueList, $4->trueList);
-
-        printf("[EXPR] found expr OR expr at line %d\n", yylineno);
-    }
-    | expr AND M expr {
-        if (!quads->checkArithmeticExpression($1, $4)) {
-            yyerror("Arithmetic expression must be of the same type");
-            return -1;
-        }
-
-        expr* trueExpr = quads->newExpr(constbool_e);
-        trueExpr->boolConst = true;
-
-        if ($4->type != boolexpr_e) {
-            $4->trueList.push_back(quads->nextQuad());
-            $4->falseList.push_back(quads->nextQuad() + 1);
-            quads->emit(if_eq_op, nullptr, $4, trueExpr, 0, yylineno);
-            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
-        }
-
-        for (int quad : $1->trueList) {
-            quads->patchLabel(quad, $3);
-        }
-
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-        $$->trueList = $4->trueList;
-        $$->falseList = quads->merge($1->falseList, $4->falseList);
-
-        printf("[EXPR] found expr AND expr at line %d\n", yylineno);
-    }
-    | term {
-        $$ = $1;
+    | expr OR {
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
 
@@ -459,9 +403,72 @@ expr:
             quads->emit(if_eq_op, nullptr, $1, trueExpr, quads->nextQuad() + 2, yylineno);
             quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         }
+    } M expr {
+        if (!quads->checkArithmeticExpression($1, $5)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
 
-        printf("[EXPR] found term at line %d\n", yylineno);
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($5->type != boolexpr_e) {
+            $5->trueList.push_back(quads->nextQuad());
+            $5->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $5, trueExpr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+
+
+        for (int quad : $1->falseList) {
+            quads->patchLabel(quad, $4);
+        }
+
+        $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->falseList = $5->falseList;
+        $$->trueList = quads->merge($1->trueList, $5->trueList);
+
+        printf("[EXPR] found expr OR expr at line %d\n", yylineno);
     }
+    | expr AND {
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($1->type != boolexpr_e) {
+            $1->trueList.push_back(quads->nextQuad());
+            $1->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $1, trueExpr, quads->nextQuad() + 2, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+    } M expr {
+        if (!quads->checkArithmeticExpression($1, $5)) {
+            yyerror("Arithmetic expression must be of the same type");
+            return -1;
+        }
+
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        if ($5->type != boolexpr_e) {
+            $5->trueList.push_back(quads->nextQuad());
+            $5->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $5, trueExpr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
+
+        for (int quad : $1->trueList) {
+            quads->patchLabel(quad, $4);
+        }
+
+        $$ = quads->newExpr(boolexpr_e);
+        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->trueList = $5->trueList;
+        $$->falseList = quads->merge($1->falseList, $5->falseList);
+
+        printf("[EXPR] found expr AND expr at line %d\n", yylineno);
+    }
+    | term { $$ = $1; printf("[EXPR] found term at line %d\n", yylineno); }
     ;
 
 assignexpr:
