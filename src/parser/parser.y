@@ -969,7 +969,24 @@ ifprefix:
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
 
-        quads->emit(if_eq_op, $3, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        expr* falseExpr = quads->newExpr(constbool_e);
+        falseExpr->boolConst = false;
+
+        expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
+        evaluatedShortCircuit->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+
+        for (int quad : $3->trueList) {
+            quads->patchLabel(quad, quads->nextQuad());
+        }
+        for (int quad : $3->falseList) {
+            quads->patchLabel(quad, quads->nextQuad() + 2);
+        }
+
+        quads->emit(assign_op, evaluatedShortCircuit, trueExpr, nullptr, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
+        quads->emit(assign_op, evaluatedShortCircuit, falseExpr, nullptr, 0, yylineno);
+
+        quads->emit(if_eq_op, evaluatedShortCircuit, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
         $$ = quads->nextQuad();
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
@@ -1024,7 +1041,24 @@ whilecond:
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
 
-        quads->emit(if_eq_op, $2, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        expr* falseExpr = quads->newExpr(constbool_e);
+        falseExpr->boolConst = false;
+
+        expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
+        evaluatedShortCircuit->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+
+        for (int quad : $2->trueList) {
+            quads->patchLabel(quad, quads->nextQuad());
+        }
+        for (int quad : $2->falseList) {
+            quads->patchLabel(quad, quads->nextQuad() + 2);
+        }
+
+        quads->emit(assign_op, evaluatedShortCircuit, trueExpr, nullptr, 0, yylineno);
+        quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
+        quads->emit(assign_op, evaluatedShortCircuit, falseExpr, nullptr, 0, yylineno);
+
+        quads->emit(if_eq_op, evaluatedShortCircuit, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
         $$ = quads->nextQuad();
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
