@@ -20,6 +20,9 @@
     int functionScopeCount = 0;
     int loopScopeCount = 0;
 
+    bool inFunction = false;
+    bool inLoop = false;
+
     bool isMethodCall = false;
     bool isMemberCall = false;
     bool isFunction = false;
@@ -182,7 +185,7 @@ stmt:
 
 break:
     BREAK {
-        if (loopScopeCount == 0 && loopScopeCount == 0) {
+        if (loopScopeCount == 0 || inFunction == true) {
             yyerror("Break must be used inside a loop");
         }
     } SEMICOLON {
@@ -198,8 +201,8 @@ break:
 
 continue:
     CONTINUE {
-        if (loopScopeCount == 0 && loopScopeCount == 0) {
-            yyerror("Break must be used inside a loop");
+        if (loopScopeCount == 0 || inFunction == true) {
+            yyerror("Continue must be used inside a loop");
         }
     } SEMICOLON {
         if (contNumbers.size()-1 < loopScopeCount) {
@@ -523,11 +526,27 @@ term:
         printf("[TERM] found -expr at line %d\n", yylineno);
     }
     | NOT expr {
-        $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$ = $2;
+
+        expr* trueExpr = quads->newExpr(constbool_e);
+        trueExpr->boolConst = true;
+
+        expr* falseExpr = quads->newExpr(constbool_e);
+        falseExpr->boolConst = false;
+
+        if ($2->type != boolexpr_e) {
+            expr*  boolExpr = quads->newExpr(boolexpr_e);
+            $2->trueList.push_back(quads->nextQuad());
+            $2->falseList.push_back(quads->nextQuad() + 1);
+
+            quads->emit(if_eq_op, nullptr, $2, trueExpr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+
+            $$ = boolExpr;
+        }
+
         $$->trueList = $2->falseList;
         $$->falseList = $2->trueList;
-        quads->emit(not_op, $$, $2, nullptr, 0, yylineno);
         printf("[TERM] found !expr at line %d\n", yylineno);
     }
     | INC lvalue {
@@ -577,6 +596,7 @@ term:
             expr* temp = quads->emitIfTableItem($2, yylineno, offsets[symbolTable->getScope()]++);
             quads->emit(sub_op, temp, temp, decExpr, 0, yylineno);
             quads->emit(tablesetelem_op, $2, $2->index, temp, 0, yylineno);
+            $$ = temp;
         } else {
             quads->emit(sub_op, $2, $2, decExpr, 0, yylineno);
             $$ = quads->newExpr(arithexpr_e);
@@ -730,7 +750,6 @@ call:
     | lvalue callsuffix {
         Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name);
 
-        printf("%d\n", existingSymbol == nullptr);
         if (isMethodCall) {
             isMethodCall = false;
         }
@@ -772,6 +791,7 @@ callsuffix:
 
 normcall:
     PAREN_OPEN elist PAREN_CLOSE {
+        $$ = new call();
         $$->elist = $2;
         $$->method = false;
         $$->name = nullptr;
@@ -791,6 +811,7 @@ methodcall:
 elist:
     expr {
         $$ = $1;
+        $$->next = nullptr;
         printf("[ELIST] found expr at line %d\n", yylineno);
     }
     | expr COMMA elist {
@@ -811,6 +832,10 @@ objectdef:
             expr* elist_expr = quads->newExpr(constnum_e);
             elist_expr->numConst = i++;
             quads->emit(tablesetelem_op, $$, elist_expr, $elist, 0, yylineno);
+
+            if ($elist->next == nullptr) {
+                break;
+            }
         }
 
         printf("[OBJECTDEF] found [elist] at line %d\n", yylineno);
@@ -869,7 +894,7 @@ block:
     ;
 
 funcdef:
-    FUNCTION { functionScopeCount++; } PAREN_OPEN {
+    FUNCTION { functionScopeCount++; inFunction = true; } PAREN_OPEN {
         Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
         $<expr>$ = quads->newExpr(libraryfunc_e);
         $<expr>$->symbol = symbol->toStruct();
@@ -882,8 +907,9 @@ funcdef:
     } idlist PAREN_CLOSE block {
         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
         functionScopeCount--;
+        inFunction = false;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
-    | FUNCTION { functionScopeCount++; isFunction = true; } ID
+    | FUNCTION { functionScopeCount++; isFunction = true; inFunction = true; } ID
      {
          Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
@@ -911,6 +937,7 @@ funcdef:
      } idlist PAREN_CLOSE block {
          functionScopeCount--;
          quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+         inFunction = false;
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     ;
 
@@ -921,7 +948,7 @@ idlist:
          if (symbol == nullptr) {
              symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
          } else if (symbol->getScope() == 0) {
-            char message[100];
+             char message[100];
              sprintf(message, "%s cannot be redefined", $1);
              yyerror(message);
          } else if (symbol->getFunctionScope() == functionScopeCount) {
@@ -1027,12 +1054,14 @@ whilestmt:
         breakNumbers.at(loopScopeCount) = 0;
 
         loopScopeCount--;
+        inLoop = false;
     }
     ;
 
 whilestart:
     WHILE {
         $$ = quads->nextQuad();
+        inLoop = true;
     }
     ;
 
@@ -1084,6 +1113,7 @@ forstmt:
         breakNumbers.at(loopScopeCount) = 0;
 
         loopScopeCount--;
+        inLoop = false;
 
         printf("[FORSTMT] found for (elist; expr; elist) stmts at line %d\n", yylineno);
     }
@@ -1098,6 +1128,7 @@ forprefix:
         if (breakNumbers.size()-1 < loopScopeCount) {
             breakNumbers.push_back(0);
         }
+        inLoop = true;
     } PAREN_OPEN elist SEMICOLON M expr SEMICOLON
     {
         $$ = new struct forStatement();
@@ -1142,11 +1173,19 @@ M:
     ;
 
 returnstmt:
-    RETURN { if (functionScopeCount == 0) { yyerror("Return must be used inside a function"); } } expr SEMICOLON {
+    RETURN {
+        if (functionScopeCount == 0 || inLoop == true) {
+            yyerror("Return must be used inside a function");
+        }
+    } expr SEMICOLON {
         quads->emit(ret_op, nullptr, $3, nullptr, 0, yylineno);
         printf("[RETURNSTMT] found return expr; at line %d\n", yylineno);
     }
-    | RETURN SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno); }
+    | RETURN {
+        if (functionScopeCount == 0 || inLoop == true) {
+            yyerror("Return must be used inside a function");
+        }
+    } SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno); }
     ;
 
 %%

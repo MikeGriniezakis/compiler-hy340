@@ -30,8 +30,6 @@ void printExpr(std::stringstream* ss, expr* expr) {
         default:
             if (expr->symbol != nullptr) {
                 *ss << std::setw(15) << expr->symbol->name;
-            } else {
-                fprintf(stderr, "Error: Symbol with type %s is null\n", iopCodesLabels[expr->type].c_str());
             }
             break;
     }
@@ -44,7 +42,7 @@ void Quad::print() {
     printExpr(&ss, this->result);
     printExpr(&ss, this->arg1);
     printExpr(&ss, this->arg2);
-    if (this->label != 0) {
+    if (this->label != 0 || this->getCode() == jump_op) {
         ss << std::setw(15) << this->label;
     }
 
