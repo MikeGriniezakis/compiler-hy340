@@ -1223,6 +1223,7 @@ int main(int argc, char** argv) {
 
     vm->generate();
     vm->print();
+    vm->createBinaryFile();
 
     return 0;
 }

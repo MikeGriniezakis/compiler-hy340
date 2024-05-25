@@ -5,7 +5,9 @@
 #include "vm.h"
 
 #include <cassert>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include "src/generators/generators.h"
 
@@ -147,69 +149,163 @@ void VirtualMachine::resetOperand(vmarg* arg) {
     arg->val = 0;
 }
 
-void VirtualMachine::printVMArg(vmarg* arg) {
+void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
     if (arg == nullptr) {
+        *ss << std::setw(15) << "NULL";
         return;
     }
 
-    printf("%d", arg->type);
     switch (arg->type) {
         case label_a:
-            std::cout << "(label) " << arg->val;
+            *ss << std::setw(15) << arg->type << "(label) " << arg->val;
             break;
         case global_a:
-            std::cout << "(global), " << arg->type << ":" << arg->val;
-            break;
         case formal_a:
-            std::cout << "(global), " << arg->type << ":" << arg->val;
-            break;
         case local_a:
-            std::cout << "(global), " << arg->type << ":" << arg->val;
-        break;
+            *ss << std::setw(15) << "(global), " << arg->type << ":" << arg->val;
+            break;
         case number_a:
-            std::cout << "(number), " << arg->val << ':' << numConsts.at(arg->val);
+            *ss << std::setw(15) << arg->type << "(number), " << arg->val << ':' << numConsts.at(arg->val);
             break;
         case string_a:
-            std::cout << "(string) " << stringConsts.at(arg->val);
+            *ss << std::setw(15) << arg->type << "(string) " << stringConsts.at(arg->val);
             break;
         case bool_a:
-            std::cout << "(bool) " << (arg->val ? "true": "false");
+            *ss << std::setw(15) << arg->type << "(bool) " << (arg->val ? "true" : "false");
             break;
         case nil_a:
-            std::cout << "(nil)";
+            *ss << std::setw(15) << arg->type << "(nil)";
             break;
         case userfunc_a:
-            std::cout << "(user function) " << this->userFuncs.at(arg->val)->name;
+            *ss << std::setw(15) << arg->type << "(user function) " << this->userFuncs.at(arg->val)->name;
             break;
         case libfunc_a:
-            std::cout << "(library function) " << this->namedLibfuncs.at(arg->val);
+            *ss << std::setw(15) << arg->type << "(library function) " << this->namedLibfuncs.at(arg->val);
             break;
         case retval_a:
-            std::cout << "(return value) " << arg->type << ":" << arg->val;
+            *ss << std::setw(15) << "(return value) " << arg->type << ":" << arg->val;
             break;
         default:
-            std::cout << arg->type << ":" << arg->val;
+            *ss << std::setw(15) << arg->type << ":" << arg->val;
             break;
     }
 }
 
 
-void VirtualMachine::printInstruction(instruction* instruction) {
-    printf("%s\t", vmopcodeNames[instruction->opcode].c_str());
-    this->printVMArg(&instruction->result);
-    printf("\t");
-    this->printVMArg(&instruction->arg1);
-    printf("\t");
-    this->printVMArg(&instruction->arg2);
-    printf("\n");
+void VirtualMachine::printInstruction(std::stringstream* ss, instruction* instruction) {
+    *ss << std::setw(15) << vmopcodeNames[instruction->opcode].c_str();
+    this->printVMArg(ss, &instruction->result);
+    this->printVMArg(ss, &instruction->arg1);
+    this->printVMArg(ss, &instruction->arg2);
 }
 
 void VirtualMachine::print() {
+    std::stringstream ss;
     for (int i = 0; i < this->instructions.size(); i++) {
         auto t = this->instructions[i];
-        printf("Instruction#\topcode\t\tresult\t\t arg1\t\t arg2\t\tlabel\n");
-        std::cout << i;
-        printf("\t\t");
-        this->printInstruction(t);
+        ss << std::setw(15) << "Instruction#";
+        ss << std::setw(15) << "opcode";
+        ss << std::setw(15) << "result";
+        ss << std::setw(15) << "arg1";
+        ss << std::setw(15) << "arg2";
+        ss << std::endl;
+
+        ss << std::setw(15) << i;
+        this->printInstruction(&ss, t);
+        ss << std::endl;
+
+        printf("%s\n", ss.str().c_str());
+        ss.clear();
     }
+}
+
+void VirtualMachine::createBinaryFile() {
+    char terminator = '\0';
+
+    FILE *file = fopen("output.bin", "wb");
+    if (!file) {
+        assert(0);
+    }
+
+    unsigned magic = 45823297;
+    fwrite(&magic, sizeof(unsigned int), 1, file);
+    // fwrite(&programVarOffset, sizeof(unsigned int), 1, file);
+
+    unsigned int numConstsSize = numConsts.size();
+    fwrite(&(numConstsSize), sizeof(unsigned int), 1, file);
+    for (double num : numConsts) {
+        fwrite(&num, sizeof(double), 1, file);
+    }
+
+
+    unsigned int stringConstsSize = stringConsts.size();
+    fwrite(&stringConstsSize, sizeof(unsigned), 1, file);
+    for (std::string str: stringConsts) {
+        for (char c : str) {
+            fwrite(&c, sizeof(char), 1, file);
+        }
+        fwrite(&terminator, sizeof(char), 1, file);
+    }
+
+    unsigned int namedLibFunctionsSize = namedLibfuncs.size();
+    fwrite(&namedLibFunctionsSize, sizeof(unsigned), 1, file);
+    for (std::string fun : namedLibfuncs) {
+        for (char c : fun) {
+            fwrite(&c, sizeof(char), 1, file);
+        }
+        fwrite(&terminator, sizeof(char), 1, file);
+    }
+
+    unsigned int userFunctionsSize = userFuncs.size();
+    fwrite(&userFunctionsSize, sizeof(unsigned), 1, file);
+    for (SymbolStruct* fun : userFuncs) {
+        // for (fun->name) {
+        //     fwrite(&c, sizeof(char), 1, file);
+        // }
+
+        fwrite(&terminator, sizeof(char), 1, file);
+
+        // fwrite(&fun.address, sizeof(unsigned), 1, file);
+        // fwrite(&fun.localSize, sizeof(unsigned), 1, file);
+    }
+
+    unsigned int instructionsSize = instructions.size();
+    fwrite(&instructionsSize, sizeof(unsigned), 1, file);
+    for (auto instruction : instructions) {
+        fwrite(&instruction->opcode, sizeof(vmopcode), 1, file);
+
+        // unsigned isResultNull = instruction->result.isEmpty;
+        // fwrite(&isResultNull, sizeof(unsigned), 1, file);
+    //     if (instruction->result != nullptr) {
+    //         fwrite(&instruction->result.type, sizeof(vmarg_t), 1, file);
+    //         fwrite(&instruction->result.val, sizeof(unsigned), 1, file);
+    //         fwrite(&terminator, sizeof(char), 1, file);
+    //     }
+    //
+    //     unsigned isArg1Null = instruction->arg1.isEmpty;
+    //     fwrite(&isArg1Null, sizeof(unsigned), 1, file);
+    //     if (!isArg1Null) {
+    //         fwrite(&instruction->arg1.type, sizeof(vmarg_t), 1, file);
+    //         fwrite(&instruction->arg1.val, sizeof(unsigned), 1, file);
+    //         for (char c : instruction->arg1.name) {
+    //             fwrite(&c, sizeof(char), 1, file);
+    //         }
+    //         fwrite(&terminator, sizeof(char), 1, file);
+    //     }
+    //
+    //     unsigned isArg2Null = instruction->arg2.isEmpty;
+    //     fwrite(&isArg2Null, sizeof(unsigned), 1, file);
+    //     if (!isArg2Null) {
+    //         fwrite(&instruction->arg2.type, sizeof(vmarg_t), 1, file);
+    //         fwrite(&instruction->arg2.val, sizeof(unsigned), 1, file);
+    //         for (char c : instruction->arg2.name) {
+    //             fwrite(&c, sizeof(char), 1, file);
+    //         }
+    //         fwrite(&terminator, sizeof(char), 1, file);
+    //     }
+    //
+        fwrite(&instruction->srcLine, sizeof(unsigned), 1, file);
+    }
+
+    fclose(file);
 }

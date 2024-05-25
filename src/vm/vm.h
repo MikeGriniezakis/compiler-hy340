@@ -120,11 +120,13 @@ public:
 
     void emit(instruction* instruction);
 
-    void printInstruction(instruction* instruction);
+    void printInstruction(std::stringstream* ss, instruction* instruction);
 
-    void printVMArg(vmarg* vmarg);
+    void printVMArg(std::stringstream* ss, vmarg* vmarg);
 
     void print();
+
+    void createBinaryFile();
 };
 
 #endif //VM_H
