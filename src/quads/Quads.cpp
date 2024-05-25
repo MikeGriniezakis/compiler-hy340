@@ -53,6 +53,14 @@ void Quad::setLabel(unsigned label) {
     this->label = label;
 }
 
+void Quad::setTAddress(unsigned tAddress) {
+    this->tAddress = tAddress;
+}
+
+unsigned Quad::getTAddress() {
+    return this->tAddress;
+}
+
 void Quads::emit(iopcode code, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line) {
     Quad* quad = new Quad(code, result, arg1, arg2, label, line);
 
@@ -169,4 +177,12 @@ std::vector<int> Quads::merge(std::vector<int> list1, std::vector<int> list2) {
     mergedList.insert(mergedList.end(), list2.begin(), list2.end());
 
     return mergedList;
+}
+
+Quad* Quads::getQuad(unsigned quad) {
+    return this->quads[quad];
+}
+
+std::vector<Quad *> Quads::getQuads() {
+    return this->quads;
 }

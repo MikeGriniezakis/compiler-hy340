@@ -11,23 +11,61 @@
 #include "SymbolTable.h"
 
 enum iopcode {
-    assign_op, mul_op, uminus_op, not_op,
-    if_lesseq_op, if_greater_op, ret_op, funcend_op,
-    tablegetelem_op, add_op, div_op, and_op,
-    if_eq_op, if_greatereq_op, call_op, getretval_op,
-    tablecreate_op, tablesetelem_op, sub_op, mod_op,
-    or_op, if_noteq_op, if_less_op, param_op, funcstart_op,
+    add_op,
+    sub_op,
+    mul_op,
+    div_op,
+    mod_op,
+    tablecreate_op,
+    tablegetelem_op,
+    tablesetelem_op,
+    if_greater_op,
+    if_greatereq_op,
+    if_less_op,
+    if_lesseq_op,
+    not_op,
+    or_op,
+    param_op,
+    call_op,
+    getretval_op,
+    funcstart_op,
+    ret_op,
+    funcend_op,
+    assign_op,
+    uminus_op,
+    and_op,
+    if_eq_op,
+    if_noteq_op,
     jump_op
 };
 
-inline std::string iopCodesLabels[] = {
-    "assign", "mul", "uminus", "not",
-    "if_lesseq", "if_greater", "ret", "funcend",
-    "tablegetelem", "add", "div", "and",
-    "if_eq", "if_greatereq", "call", "getretval",
-    "tablecreate", "tablesetelem", "sub", "mod",
-    "or", "if_noteq", "if_less", "param", "funcstart",
-    "jump"
+inline const std::string iopCodesLabels[] = {
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "mod",
+        "tableCreate",
+        "tableGetElem",
+        "tableSetElem",
+        "if_greater",
+        "if_greatereq",
+        "if_less",
+        "if_lesseq",
+        "not",
+        "or",
+        "param",
+        "call",
+        "getRetVal",
+        "funcStart",
+        "return",
+        "funcEnd",
+        "assign",
+        "uminus",
+        "and",
+        "if_eq",
+        "if_noteq",
+        "jump"
 };
 
 enum expr_t {
@@ -75,6 +113,7 @@ class Quad {
     expr *arg2;
     unsigned label;
     unsigned line;
+    unsigned tAddress;
 public:
     Quad(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line)
                : code(code), result(result), arg1(arg1), arg2(arg2), label(label), line(line) {}
@@ -90,6 +129,8 @@ public:
     unsigned getLine() { return line; }
 
     void setLabel(unsigned label);
+    void setTAddress(unsigned tAddress);
+    unsigned getTAddress();
 };
 
 class Quads {
@@ -99,6 +140,8 @@ class Quads {
 public:
     Quads(SymbolTable* symbolTable) : tempCounter(0), symbolTable(symbolTable) {}
 
+    std::vector<Quad*> getQuads();
+    Quad* getQuad(unsigned quad);
     void resetTempCounter() { tempCounter = 0; }
     SymbolStruct* createTemp(int offset);
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);

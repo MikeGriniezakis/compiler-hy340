@@ -5,6 +5,7 @@
     #include <src/symbolTable/SymbolTable.h>
     #include <sstream>
     #include <src/quads/Quads.h>
+    #include <src/vm/vm.h>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);
@@ -15,6 +16,7 @@
 
     SymbolTable* symbolTable = new SymbolTable();
     Quads* quads = new Quads(symbolTable);
+    VirtualMachine* vm = new VirtualMachine(quads);
 
     int functionCount = 0;
     int functionScopeCount = 0;
@@ -1217,6 +1219,10 @@ int main(int argc, char** argv) {
     }
 
     quads->printQuads();
+    printf("\n\n");
+
+    vm->generate();
+    vm->print();
 
     return 0;
 }

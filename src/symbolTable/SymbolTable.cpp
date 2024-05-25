@@ -67,7 +67,16 @@ Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, 
             type = SCOPED;
         }
     }
-    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR, functionScope, offset);
+    ScopeSpace space;
+    if (isFormal) {
+        space = FORMAL_ARG;
+    } else if (isFunction) {
+        space = FUNCTION_LOCAL;
+    } else {
+        space = PROGRAM_VAR;
+    }
+
+    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR, functionScope, offset, space);
 
     this->symbolTable[symbol->getName()].push_back(symbol);
     this->scopes.at(this->scope).push_back(symbol);

@@ -21,6 +21,10 @@ add_executable(
         src/symbol/Symbol.cpp
         src/quads/Quads.cpp
         src/quads/Quads.h
+        src/vm/vm.cpp
+        src/vm/vm.h
+        src/generators/generators.h
+        src/generators/generators.cpp
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
