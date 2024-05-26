@@ -30,7 +30,7 @@ void generate_relational(vmopcode op, Quad* quad, VirtualMachine* vm) {
 }
 
 extern void generate_ADD(Quad* quad, VirtualMachine* vm) {
-    generate(and_v, quad, vm);
+    generate(add_v, quad, vm);
 }
 
 extern void generate_SUB(Quad* quad, VirtualMachine* vm) {

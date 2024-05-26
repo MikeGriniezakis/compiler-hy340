@@ -108,26 +108,22 @@ void SymbolTable::printSymbolTable() {
     }
 }
 
-Symbol* SymbolTable::lookupSymbol(const std::string& name) {
+Symbol* SymbolTable::lookupSymbol(const std::string& name, int scope) {
     if (this->symbolTable.find(name) == this->symbolTable.end()) {
         return nullptr;
     }
 
-    int maxScope = -1;
-    Symbol* maxSymbol = nullptr;
+    if (scope == -1) {
+        return nullptr;
+    }
 
-    for (auto &symbol : this->symbolTable[name]) {
-        if (!symbol->isActive()) {
-            continue;
-        }
-
-        if ((int) symbol->getScope() > maxScope) {
-            maxScope = (int) symbol->getScope();
-            maxSymbol = symbol;
+    for (auto &symbol : this->scopes.at(scope)) {
+        if (symbol->isActive() && symbol->getName() == name) {
+            return symbol;
         }
     }
 
-    return maxSymbol;
+    return lookupSymbol(name, scope - 1);
 }
 
 Symbol* SymbolTable::lookupSymbolGlobal(const std::string& name) {
@@ -147,5 +143,5 @@ Symbol* SymbolTable::lookupSymbolScoped(const std::string& name) {
         }
     }
 
-    return this->lookupSymbolGlobal(name);
+    return this->lookupSymbol(name, this->scope);
 }

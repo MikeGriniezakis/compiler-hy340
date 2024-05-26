@@ -154,46 +154,48 @@ void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
         *ss << std::setw(15) << "NULL";
         return;
     }
+    std::stringstream typeSS;
 
     switch (arg->type) {
         case label_a:
-            *ss << std::setw(15) << arg->type << "(label) " << arg->val;
+            typeSS << arg->type << "(label) " << arg->val;
             break;
         case global_a:
         case formal_a:
         case local_a:
-            *ss << std::setw(15) << "(global), " << arg->type << ":" << arg->val;
+            typeSS << arg->type << "(global), " << arg->val;
             break;
         case number_a:
-            *ss << std::setw(15) << arg->type << "(number), " << arg->val << ':' << numConsts.at(arg->val);
+            typeSS << arg->type << "(number), " << arg->val << ':' << numConsts.at(arg->val);
             break;
         case string_a:
-            *ss << std::setw(15) << arg->type << "(string) " << stringConsts.at(arg->val);
+            typeSS << arg->type << "(string) " << stringConsts.at(arg->val);
             break;
         case bool_a:
-            *ss << std::setw(15) << arg->type << "(bool) " << (arg->val ? "true" : "false");
+            typeSS << arg->type << "(bool) " << (arg->val ? "true" : "false");
             break;
         case nil_a:
-            *ss << std::setw(15) << arg->type << "(nil)";
+            typeSS << arg->type << "(nil)";
             break;
         case userfunc_a:
-            *ss << std::setw(15) << arg->type << "(user function) " << this->userFuncs.at(arg->val)->name;
+            typeSS << arg->type << "(user function) " << this->userFuncs.at(arg->val)->name;
             break;
         case libfunc_a:
-            *ss << std::setw(15) << arg->type << "(library function) " << this->namedLibfuncs.at(arg->val);
+            typeSS << arg->type << "(library function) " << this->namedLibfuncs.at(arg->val);
             break;
         case retval_a:
-            *ss << std::setw(15) << "(return value) " << arg->type << ":" << arg->val;
+            typeSS << "(return value) " << arg->type << ":" << arg->val;
             break;
         default:
-            *ss << std::setw(15) << arg->type << ":" << arg->val;
+            typeSS << arg->type << ":" << arg->val;
             break;
     }
+    *ss << std::setw(25) << typeSS.str();
 }
 
 
 void VirtualMachine::printInstruction(std::stringstream* ss, instruction* instruction) {
-    *ss << std::setw(15) << vmopcodeNames[instruction->opcode].c_str();
+    *ss << std::setw(25) << vmopcodeNames[instruction->opcode].c_str();
     this->printVMArg(ss, &instruction->result);
     this->printVMArg(ss, &instruction->arg1);
     this->printVMArg(ss, &instruction->arg2);
@@ -201,22 +203,20 @@ void VirtualMachine::printInstruction(std::stringstream* ss, instruction* instru
 
 void VirtualMachine::print() {
     std::stringstream ss;
+    ss << std::setw(25) << "Instruction#";
+    ss << std::setw(25) << "opcode";
+    ss << std::setw(25) << "result";
+    ss << std::setw(25) << "arg1";
+    ss << std::setw(25) << "arg2";
+    ss << std::endl;
     for (int i = 0; i < this->instructions.size(); i++) {
         auto t = this->instructions[i];
-        ss << std::setw(15) << "Instruction#";
-        ss << std::setw(15) << "opcode";
-        ss << std::setw(15) << "result";
-        ss << std::setw(15) << "arg1";
-        ss << std::setw(15) << "arg2";
-        ss << std::endl;
-
-        ss << std::setw(15) << i;
+        ss << std::setw(25) << i;
         this->printInstruction(&ss, t);
         ss << std::endl;
-
-        printf("%s\n", ss.str().c_str());
-        ss.clear();
     }
+    printf("%s\n", ss.str().c_str());
+    ss.clear();
 }
 
 void VirtualMachine::createBinaryFile() {

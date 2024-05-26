@@ -151,7 +151,10 @@ SymbolStruct* Quads::createTemp(int offset) {
     temp->name = strdup(name);
     temp->offset = offset;
 
-    this->symbolTable->insertSymbol(temp->name, 0, false, false, 0, offset);
+    Symbol* existingSymbol = this->symbolTable->lookupSymbolScoped(temp->name);
+    if (existingSymbol == nullptr || existingSymbol->getScope() != symbolTable->getScope()) {
+        this->symbolTable->insertSymbol(temp->name, 0, false, false, 0, offset);
+    }
 
     return temp;
 }

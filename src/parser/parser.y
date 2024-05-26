@@ -37,58 +37,76 @@
     std::stack<int> breakStack;
     std::stack<int> contStack;
 
-    void insertToken(struct SymbolStruct* symbol, bool isArgument) {
-        Symbol* existingSymbol = nullptr;
-        if (symbol->type == GLOBAL) {
-            existingSymbol = symbolTable->lookupSymbolGlobal(symbol->name);
-        } else if (symbol->type == ASSIGNMENT) {
-            existingSymbol = symbolTable->lookupSymbol(symbol->name);
-        } else {
-            existingSymbol = symbolTable->lookupSymbolScoped(symbol->name);
-        }
-
-        if (symbol->type == GLOBAL && existingSymbol == nullptr) {
-            char message[100];
-            sprintf(message, "Global variable %s not found", symbol->name);
-            yyerror(message);
-
-            return;
-        }
-
-        if (existingSymbol == nullptr) {
-            if (symbolTable->isNameReserved(symbol->name)) {
+    void insertToken(struct SymbolStruct* symbol, bool isArgument, bool insert) {
+        if (symbolTable->isNameReserved(symbol->name)) {
+            if (symbol->type == SCOPED || symbol->type == FORMAL) {
                 char message[100];
                 sprintf(message, "Reserved name %s cannot be used", symbol->name);
                 yyerror(message);
-
                 return;
             }
         }
 
-        if (symbol->type == SCOPED) {
-            if (existingSymbol == nullptr) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
-                isFunction = false;
-            }
+        Symbol* existingSymbol = nullptr;
+        if (symbol->type == GLOBAL) {
+            existingSymbol = symbolTable->lookupSymbolGlobal(symbol->name);
+        } else if (symbol->type == ASSIGNMENT) {
+            existingSymbol = symbolTable->lookupSymbol(symbol->name, symbolTable->getScope());
+        } else {
+            existingSymbol = symbolTable->lookupSymbolScoped(symbol->name);
         }
 
+        if (existingSymbol == nullptr) {
+            if (symbol->type == GLOBAL) {
+                char message[100];
+                sprintf(message, "Global variable %s not found", symbol->name);
+                yyerror(message);
 
-        if (symbol->type == ASSIGNMENT) {
-            if (existingSymbol == nullptr) {
+                return;
+            }
+
+            if (insert)
                 symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+            isFunction = false;
+            return;
+        }
+
+        switch (symbol->type) {
+            case SCOPED: {
+                if (existingSymbol->getScope() == symbolTable->getScope() && existingSymbol->getFunctionScope() == functionScopeCount) {
+                    break;
+                }
+                if (insert)
+                    symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
                 isFunction = false;
-            } else {
-                if (existingSymbol->getScope() < (int) symbolTable->getScope() && existingSymbol->getFunctionScope() != functionScopeCount && existingSymbol->getScope() != 0 && (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)) {
+                break;
+            }
+            case ASSIGNMENT: {
+                if (
+                    existingSymbol->getScope() < (int) symbolTable->getScope() &&
+                    existingSymbol->getFunctionScope() != functionScopeCount &&
+                    existingSymbol->getScope() != 0 &&
+                    (existingSymbol->getType() == SCOPED || existingSymbol->getType() == FORMAL)
+                ) {
                     char message[100];
                     sprintf(message, "%s not defined", symbol->name);
                     yyerror(message);
-                } else if (existingSymbol->getSymbolClass() != isFunction ? FUNC : VAR && !isMemberCall && !isArgument) {
+                } else if (existingSymbol->getSymbolClass() != isFunction ? FUNC : VAR && !isMemberCall && !isArgument && insert) {
                     char message[100];
-                    sprintf(message, "%s, %s redefined as %s", symbol->name, existingSymbol->getSymbolClass() == FUNC ? "function" : "variable", isFunction ? "function" : "variable");
+                    sprintf(message, "%s %s redefined as %s", existingSymbol->getSymbolClass() == FUNC ? "function" : "variable", symbol->name,  isFunction ? "function" : "variable");
                     yyerror(message);
                 }
 
                 isMemberCall = false;
+                break;
+            }
+            case GLOBAL: {
+                if (existingSymbol->getSymbolClass() != isFunction ? FUNC : VAR && !isMemberCall && !isArgument && insert) {
+                    char message[100];
+                    sprintf(message, "%s, %s redefined as %s", symbol->name, existingSymbol->getSymbolClass() == FUNC ? "function" : "variable", isFunction ? "function" : "variable");
+                    yyerror(message);
+                }
+                break;
             }
         }
     }
@@ -165,8 +183,8 @@
 program: stmts { printf("[PROGRAM] found stmts at line %d\n", yylineno); } ;
 
 stmts:
-    stmt { printf("[STMTS] found stmt at line %d\n", yylineno); }
-    | stmts stmt { printf("[STMTS] found stmts at line %d\n", yylineno); }
+    stmts stmt { printf("[STMTS] found stmts at line %d\n", yylineno); }
+    |
     ;
 
 stmt:
@@ -180,14 +198,16 @@ stmt:
     | returnstmt { printf("[STMT] found returnstmt at line %d\n", yylineno); }
     | break { printf("[STMT] found break; at line %d\n", yylineno); }
     | continue { printf("[STMT] found continue; at line %d\n", yylineno); }
-    | block { printf("[STMT] found block at line %d\n", yylineno); }
     | funcdef { printf("[STMT] found funcdef at line %d\n", yylineno); }
+    | block { printf("[STMT] found block at line %d\n", yylineno); }
     | SEMICOLON { printf("[STMT] found ; at line %d\n", yylineno); }
     ;
 
 break:
     BREAK {
-        if (loopScopeCount == 0 || inFunction == true) {
+        if (loopScopeCount == 0) {
+            yyerror("Break must be used inside a loop");
+        } else if (inFunction && !inLoop) {
             yyerror("Break must be used inside a loop");
         }
     } SEMICOLON {
@@ -510,8 +530,8 @@ assignexpr:
             quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
             $$ = quads->newExpr(assignexpr_e);
             $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
-            //quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
-            insertToken($1->symbol, false);
+            quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
+            insertToken($1->symbol, false, true);
         }
 
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
@@ -634,7 +654,9 @@ term:
 primary:
     lvalue {
         $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
-        insertToken($1->symbol, true);
+
+        insertToken($1->symbol, false, false);
+
         printf("[PRIMARY] found lvalue at line %d\n", yylineno);
     }
     | call { printf("[PRIMARY] found call at line %d\n", yylineno); }
@@ -685,8 +707,7 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = ASSIGNMENT;
 
-
-        Symbol* existingSymbol = symbolTable->lookupSymbol($1);
+        Symbol* existingSymbol = symbolTable->lookupSymbol($1, symbolTable->getScope());
         $$ = quads->newExpr(var_e);
 
         if (existingSymbol == nullptr) {
@@ -694,6 +715,7 @@ lvalue:
         } else {
             $$->symbol = existingSymbol->toStruct();
         }
+        $$->symbol->type = ASSIGNMENT;
 
         printf("[LVALUE] found ID at line %d\n", yylineno);
       }
@@ -750,16 +772,18 @@ call:
         printf("[CALL] found call(elist) at line %d\n", yylineno);
     }
     | lvalue callsuffix {
-        Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name);
+        Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name, symbolTable->getScope());
 
-        if (isMethodCall) {
-            isMethodCall = false;
-        }
         if (existingSymbol == nullptr) {
-            char message[100];
-            sprintf(message, "Function %s not defined", $1->symbol->name);
-            yyerror(message);
+            existingSymbol = symbolTable->insertSymbol($1->symbol->name, yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
         } else {
+            bool isTemp = existingSymbol->getName().find("_t") != std::string::npos;
+           if (existingSymbol->getFunctionScope() < functionScopeCount && !isMethodCall && !isTemp && existingSymbol->getType() != LIBFUNC) {
+                char message[100];
+                sprintf(message, "function %s not defined", $1->symbol->name);
+                yyerror(message);
+            }
+            isMethodCall = false;
             $1 = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
             if ($2->method) {
                 expr* temp = $1;
@@ -769,7 +793,6 @@ call:
             }
             $$ = quads->makeCall($1, $2->elist, yylineno, offsets[symbolTable->getScope()]++);
         }
-
         printf("[CALL] found lvalue callsufix at line %d\n", yylineno);
     }
     | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE {
@@ -883,12 +906,16 @@ indexedelem:
     ;
 
 block:
-    CURLY_OPEN { if (!isScopeIncreasedByFunction) {
+    CURLY_OPEN {
+    if (!isScopeIncreasedByFunction) {
         symbolTable->incScope();
         if (offsets.size()-1 < symbolTable->getScope()) {
             offsets.push_back(0);
         }
-    } else { isScopeIncreasedByFunction = false; } } stmts CURLY_CLOSE {
+    } else {
+        isScopeIncreasedByFunction = false;
+    }
+    } stmts CURLY_CLOSE {
         symbolTable->decScope();
         offsets.at(symbolTable->getScope() + 1) = 0;
         printf("[BLOCK] found {stmts} at line %d\n", yylineno);
@@ -921,8 +948,19 @@ funcdef:
              yyerror(message);
          }
 
-         if (symbol == nullptr) {
+         if (
+             symbol == nullptr ||
+             (symbol->getType() == USERFUNC && symbol->getScope() < symbolTable->getScope()) ||
+             (
+                 symbol->getScope() < symbolTable->getScope() &&
+                 symbol->getScope() != 0
+             )
+         ) {
              symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+         } else if (symbol->getType() == FORMAL || (symbol->getType() == USERFUNC && symbol->getScope() == symbolTable->getScope()) || symbol->getScope() == symbolTable->getScope() - 1 || symbol->getScope() == symbolTable->getScope()) {
+             char message[100];
+             sprintf(message, "%s cannot be redefined", $3);
+             yyerror(message);
          }
          $<expr>$ = quads->newExpr(libraryfunc_e);
          $<expr>$->symbol = symbol->toStruct();
@@ -947,13 +985,9 @@ idlist:
     ID {
         Symbol* symbol = symbolTable->lookupSymbolScoped($1);
 
-         if (symbol == nullptr) {
+         if (symbol == nullptr || (symbol->getScope() == 0 && symbol->getType() != LIBFUNC)) {
              symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
-         } else if (symbol->getScope() == 0) {
-             char message[100];
-             sprintf(message, "%s cannot be redefined", $1);
-             yyerror(message);
-         } else if (symbol->getFunctionScope() == functionScopeCount) {
+         } else if (symbol->getFunctionScope() == functionScopeCount && symbol->getType() == LIBFUNC) {
              char message[100];
              sprintf(message, "%s cannot be redefined", $1);
              yyerror(message);
@@ -964,13 +998,9 @@ idlist:
     | idlist COMMA ID {
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
-         if (symbol == nullptr) {
+         if (symbol == nullptr || (symbol->getScope() == 0 && symbol->getType() != LIBFUNC)) {
              symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
-         } else if (symbol->getScope() == 0) {
-            char message[100];
-             sprintf(message, "%s cannot be redefined", $3);
-             yyerror(message);
-         } else if (symbol->getFunctionScope() == functionScopeCount) {
+         } else if (symbol->getFunctionScope() == functionScopeCount || symbol->getType() == LIBFUNC) {
              char message[100];
              sprintf(message, "%s cannot be redefined", $3);
              yyerror(message);
@@ -1221,9 +1251,9 @@ int main(int argc, char** argv) {
     quads->printQuads();
     printf("\n\n");
 
-    vm->generate();
-    vm->print();
-    vm->createBinaryFile();
+    //vm->generate();
+    //vm->print();
+    //vm->createBinaryFile();
 
     return 0;
 }
