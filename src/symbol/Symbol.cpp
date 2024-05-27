@@ -60,6 +60,10 @@ uint Symbol::getFunctionScope() {
     return this->function_scope;
 }
 
+uint Symbol::getOffset() {
+    return this->offset;
+}
+
 SymbolType Symbol::getType() const {
     return this->type;
 }

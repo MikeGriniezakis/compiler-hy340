@@ -63,6 +63,7 @@ public:
 
     std::string getName();
     bool isActive() const;
+    uint getOffset();
     uint getScope();
     uint getFunctionScope();
     SymbolType getType() const;

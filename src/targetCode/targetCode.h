@@ -2,8 +2,8 @@
 // Created by mikegriniezakis on 25/5/2024.
 //
 
-#ifndef VM_H
-#define VM_H
+#ifndef TARGET_CODE_H
+#define TARGET_CODE_H
 #include "src/quads/Quads.h"
 
 enum vmopcode {
@@ -131,4 +131,4 @@ public:
     void createBinaryFile();
 };
 
-#endif //VM_H
+#endif //TARGET_CODE_H

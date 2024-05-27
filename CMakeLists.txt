@@ -25,6 +25,10 @@ add_executable(
         src/targetCode/targetCode.h
         src/generators/generators.h
         src/generators/generators.cpp
+        src/vm/vm.cpp
+        src/vm/vm.h
+        src/dispatcher/dispatcher.cpp
+        src/dispatcher/dispatcher.h
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(

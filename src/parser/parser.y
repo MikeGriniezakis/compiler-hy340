@@ -65,7 +65,8 @@
             }
 
             if (insert) {
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                Symbol* savedSymbol = symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                symbol->offset = savedSymbol->getOffset();
             }
             isFunction = false;
             return;
@@ -77,7 +78,8 @@
                     break;
                 }
                 if (insert) {
-                    symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                    Symbol* savedSymbol = symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                    symbol->offset = savedSymbol->getOffset();
                 }
                 isFunction = false;
                 break;

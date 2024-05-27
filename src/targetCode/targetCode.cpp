@@ -41,6 +41,7 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
                     break;
                 default: assert(0);
             }
+            break;
         }
         case constbool_e:
             arg->val = expr->boolConst;
@@ -133,6 +134,8 @@ void VirtualMachine::generate() {
     for (auto quad: this->quads->getQuads()) {
         (*generators[quad->getCode()])(quad, this);
     }
+
+    this->patchIncompleteJumps();
 }
 
 unsigned VirtualMachine::nextInstructionLabel() {
