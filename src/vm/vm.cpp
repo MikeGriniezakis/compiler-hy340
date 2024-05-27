@@ -5,21 +5,27 @@
 #include "vm.h"
 
 #include <cassert>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
 
 #include "src/generators/generators.h"
 
 void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
-    if (expr == nullptr)
+    if (expr == nullptr) {
+        arg->empty = true;
         return;
+    }
 
+    arg->empty = false;
     switch (expr->type) {
         case var_e:
         case tableitem_e:
         case arithexpr_e:
         case boolexpr_e:
+        case assignexpr_e:
         case newtable_e: {
             arg->val = expr->symbol->offset;
 
@@ -150,8 +156,8 @@ void VirtualMachine::resetOperand(vmarg* arg) {
 }
 
 void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
-    if (arg == nullptr) {
-        *ss << std::setw(15) << "NULL";
+    if (arg == nullptr || arg->empty) {
+        *ss << std::setw(25) << "NULL";
         return;
     }
     std::stringstream typeSS;
@@ -169,7 +175,7 @@ void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
             typeSS << arg->type << "(number), " << arg->val << ':' << numConsts.at(arg->val);
             break;
         case string_a:
-            typeSS << arg->type << "(string) " << stringConsts.at(arg->val);
+            typeSS << arg->type << "(string) " << arg->val << ':' << stringConsts.at(arg->val);
             break;
         case bool_a:
             typeSS << arg->type << "(bool) " << (arg->val ? "true" : "false");
@@ -229,14 +235,14 @@ void VirtualMachine::createBinaryFile() {
 
     unsigned magic = 45823297;
     fwrite(&magic, sizeof(unsigned int), 1, file);
-    // fwrite(&programVarOffset, sizeof(unsigned int), 1, file);
+    unsigned offset = this->symbolTable->getVarOffset();
+    fwrite(&offset, sizeof(unsigned int), 1, file);
 
     unsigned int numConstsSize = numConsts.size();
     fwrite(&(numConstsSize), sizeof(unsigned int), 1, file);
     for (double num : numConsts) {
         fwrite(&num, sizeof(double), 1, file);
     }
-
 
     unsigned int stringConstsSize = stringConsts.size();
     fwrite(&stringConstsSize, sizeof(unsigned), 1, file);
@@ -259,14 +265,11 @@ void VirtualMachine::createBinaryFile() {
     unsigned int userFunctionsSize = userFuncs.size();
     fwrite(&userFunctionsSize, sizeof(unsigned), 1, file);
     for (SymbolStruct* fun : userFuncs) {
-        // for (fun->name) {
-        //     fwrite(&c, sizeof(char), 1, file);
-        // }
-
+        fwrite(&fun->name, sizeof(char) * strlen(fun->name), 1, file);
         fwrite(&terminator, sizeof(char), 1, file);
 
-        // fwrite(&fun.address, sizeof(unsigned), 1, file);
-        // fwrite(&fun.localSize, sizeof(unsigned), 1, file);
+        fwrite(&fun->tAddress, sizeof(unsigned), 1, file);
+        // fwrite(&fun->localSIze, sizeof(unsigned), 1, file);
     }
 
     unsigned int instructionsSize = instructions.size();
@@ -274,36 +277,36 @@ void VirtualMachine::createBinaryFile() {
     for (auto instruction : instructions) {
         fwrite(&instruction->opcode, sizeof(vmopcode), 1, file);
 
-        // unsigned isResultNull = instruction->result.isEmpty;
-        // fwrite(&isResultNull, sizeof(unsigned), 1, file);
-    //     if (instruction->result != nullptr) {
-    //         fwrite(&instruction->result.type, sizeof(vmarg_t), 1, file);
-    //         fwrite(&instruction->result.val, sizeof(unsigned), 1, file);
-    //         fwrite(&terminator, sizeof(char), 1, file);
-    //     }
-    //
-    //     unsigned isArg1Null = instruction->arg1.isEmpty;
-    //     fwrite(&isArg1Null, sizeof(unsigned), 1, file);
-    //     if (!isArg1Null) {
-    //         fwrite(&instruction->arg1.type, sizeof(vmarg_t), 1, file);
-    //         fwrite(&instruction->arg1.val, sizeof(unsigned), 1, file);
-    //         for (char c : instruction->arg1.name) {
-    //             fwrite(&c, sizeof(char), 1, file);
-    //         }
-    //         fwrite(&terminator, sizeof(char), 1, file);
-    //     }
-    //
-    //     unsigned isArg2Null = instruction->arg2.isEmpty;
-    //     fwrite(&isArg2Null, sizeof(unsigned), 1, file);
-    //     if (!isArg2Null) {
-    //         fwrite(&instruction->arg2.type, sizeof(vmarg_t), 1, file);
-    //         fwrite(&instruction->arg2.val, sizeof(unsigned), 1, file);
-    //         for (char c : instruction->arg2.name) {
-    //             fwrite(&c, sizeof(char), 1, file);
-    //         }
-    //         fwrite(&terminator, sizeof(char), 1, file);
-    //     }
-    //
+        unsigned isResultNull = instruction->result.empty;
+        fwrite(&isResultNull, sizeof(unsigned), 1, file);
+        if (!instruction->result.empty) {
+            fwrite(&instruction->result.type, sizeof(vmarg_t), 1, file);
+            fwrite(&instruction->result.val, sizeof(unsigned), 1, file);
+            fwrite(&terminator, sizeof(char), 1, file);
+        }
+
+        unsigned isArg1Null = instruction->arg1.empty;
+        fwrite(&isArg1Null, sizeof(unsigned), 1, file);
+        if (!isArg1Null) {
+            fwrite(&instruction->arg1.type, sizeof(vmarg_t), 1, file);
+            fwrite(&instruction->arg1.val, sizeof(unsigned), 1, file);
+            // for (char c : instruction->arg1.name) {
+            //     fwrite(&c, sizeof(char), 1, file);
+            // }
+            fwrite(&terminator, sizeof(char), 1, file);
+        }
+
+        unsigned isArg2Null = instruction->arg2.empty;
+        fwrite(&isArg2Null, sizeof(unsigned), 1, file);
+        if (!isArg2Null) {
+            fwrite(&instruction->arg2.type, sizeof(vmarg_t), 1, file);
+            fwrite(&instruction->arg2.val, sizeof(unsigned), 1, file);
+            // for (char c : instruction->arg2.name) {
+            //     fwrite(&c, sizeof(char), 1, file);
+            // }
+            fwrite(&terminator, sizeof(char), 1, file);
+        }
+
         fwrite(&instruction->srcLine, sizeof(unsigned), 1, file);
     }
 

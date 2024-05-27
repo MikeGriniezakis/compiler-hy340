@@ -16,7 +16,7 @@
 
     SymbolTable* symbolTable = new SymbolTable();
     Quads* quads = new Quads(symbolTable);
-    VirtualMachine* vm = new VirtualMachine(quads);
+    VirtualMachine* vm = new VirtualMachine(quads, symbolTable);
 
     int functionCount = 0;
     int functionScopeCount = 0;
@@ -31,7 +31,6 @@
     bool isScopeIncreasedByFunction = false;
 
     std::vector<char*> errors;
-    std::vector<int> offsets = {0};
     std::vector<int> contNumbers = {0};
     std::vector<int> breakNumbers = {0};
     std::stack<int> breakStack;
@@ -65,8 +64,9 @@
                 return;
             }
 
-            if (insert)
-                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+            if (insert) {
+                symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+            }
             isFunction = false;
             return;
         }
@@ -76,8 +76,9 @@
                 if (existingSymbol->getScope() == symbolTable->getScope() && existingSymbol->getFunctionScope() == functionScopeCount) {
                     break;
                 }
-                if (insert)
-                    symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+                if (insert) {
+                    symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
+                }
                 isFunction = false;
                 break;
             }
@@ -248,7 +249,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(add_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr + expr at line %d\n", yylineno);
     }
@@ -258,7 +259,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(sub_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr - expr at line %d\n", yylineno);
     }
@@ -268,7 +269,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(mul_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr * expr at line %d\n", yylineno);
     }
@@ -278,7 +279,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(div_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr / expr at line %d\n", yylineno);
     }
@@ -288,7 +289,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(mod_op, $$, $1, $3, 0, yylineno);
         printf("[EXPR] found expr % expr at line %d\n", yylineno);
     }
@@ -298,7 +299,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -319,7 +320,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -340,7 +341,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -361,7 +362,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -382,7 +383,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -403,7 +404,7 @@ expr:
             return -1;
         }
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* trueExpr = quads->newExpr(constbool_e);
         trueExpr->boolConst = true;
@@ -450,7 +451,7 @@ expr:
         }
 
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         $$->falseList = $5->falseList;
         $$->trueList = quads->merge($1->trueList, $5->trueList);
 
@@ -487,7 +488,7 @@ expr:
         }
 
         $$ = quads->newExpr(boolexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         $$->trueList = $5->trueList;
         $$->falseList = quads->merge($1->falseList, $5->falseList);
 
@@ -524,12 +525,12 @@ assignexpr:
         if ($1->type == tableitem_e) {
             quads->emit(tablesetelem_op, $1, $1->index, $3, 0, yylineno);
 
-            $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            $$ = quads->emitIfTableItem($1, yylineno);
             $$->type = assignexpr_e;
         } else {
             quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
             $$ = quads->newExpr(assignexpr_e);
-            $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+            $$->symbol = quads->createTemp();
             quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
             insertToken($1->symbol, false, true);
         }
@@ -543,7 +544,7 @@ term:
     | MINUS expr %prec UMINUS {
         quads->checkArithmeticExpression($2);
         $$ = quads->newExpr(arithexpr_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
         quads->emit(uminus_op, $$, $2, nullptr, 0, yylineno);
         printf("[TERM] found -expr at line %d\n", yylineno);
     }
@@ -577,13 +578,13 @@ term:
         addExpr->numConst = 1;
 
         if ($2->type == tableitem_e) {
-            expr* temp = quads->emitIfTableItem($2, yylineno, offsets[symbolTable->getScope()]++);
+            expr* temp = quads->emitIfTableItem($2, yylineno);
             quads->emit(add_op, temp, temp, addExpr, 0, yylineno);
             quads->emit(tablesetelem_op, $2, $2->index, temp, 0, yylineno);
         } else {
             quads->emit(add_op, $2, $2, addExpr, 0, yylineno);
             $$ = quads->newExpr(arithexpr_e);
-            $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+            $$->symbol = quads->createTemp();
             quads->emit(assign_op, $$, $2, nullptr, 0, yylineno);
         }
 
@@ -592,13 +593,13 @@ term:
     | lvalue INC {
         quads->checkArithmeticExpression($1);
         $$ = quads->newExpr(var_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* addExpr = quads->newExpr(constnum_e);
         addExpr->numConst = 1;
 
         if ($1->type == tableitem_e) {
-            expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            expr* temp = quads->emitIfTableItem($1, yylineno);
             quads->emit(assign_op, $$, temp, nullptr, 0, yylineno);
             quads->emit(add_op, temp, temp, addExpr, 0, yylineno);
             quads->emit(tablesetelem_op, $1, $1->index, temp, 0, yylineno);
@@ -615,14 +616,14 @@ term:
         decExpr->numConst = -1;
 
         if ($2->type == tableitem_e) {
-            expr* temp = quads->emitIfTableItem($2, yylineno, offsets[symbolTable->getScope()]++);
+            expr* temp = quads->emitIfTableItem($2, yylineno);
             quads->emit(sub_op, temp, temp, decExpr, 0, yylineno);
             quads->emit(tablesetelem_op, $2, $2->index, temp, 0, yylineno);
             $$ = temp;
         } else {
             quads->emit(sub_op, $2, $2, decExpr, 0, yylineno);
             $$ = quads->newExpr(arithexpr_e);
-            $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+            $$->symbol = quads->createTemp();
             quads->emit(assign_op, $$, $2, nullptr, 0, yylineno);
         }
 
@@ -631,13 +632,13 @@ term:
     | lvalue DEC {
         quads->checkArithmeticExpression($1);
         $$ = quads->newExpr(var_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         expr* decExpr = quads->newExpr(constnum_e);
         decExpr->numConst = -1;
 
         if ($1->type == tableitem_e) {
-            expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            expr* temp = quads->emitIfTableItem($1, yylineno);
             quads->emit(assign_op, $$, temp, nullptr, 0, yylineno);
             quads->emit(sub_op, temp, temp, decExpr, 0, yylineno);
             quads->emit(tablesetelem_op, $1, $1->index, temp, 0, yylineno);
@@ -653,7 +654,7 @@ term:
 
 primary:
     lvalue {
-        $$ = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+        $$ = quads->emitIfTableItem($1, yylineno);
 
         insertToken($1->symbol, false, false);
 
@@ -751,11 +752,11 @@ lvalue:
 
 member:
     lvalue DOT ID {
-        $$ = quads->makeMember($1, $3, offsets[symbolTable->getScope()]++, yylineno);
+        $$ = quads->makeMember($1, $3, yylineno);
         printf("[MEMBER] found lvalue.ID at line %d\n", yylineno);
     }
     | lvalue BRACKET_OPEN expr BRACKET_CLOSE {
-        expr* temp = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+        expr* temp = quads->emitIfTableItem($1, yylineno);
 
         $$ = quads->newExpr(tableitem_e);
         $$->symbol = temp->symbol;
@@ -768,14 +769,14 @@ member:
 
 call:
     call PAREN_OPEN elist PAREN_CLOSE {
-        $$ = quads->makeCall($1, $3, yylineno, offsets[symbolTable->getScope()]++);
+        $$ = quads->makeCall($1, $3, yylineno);
         printf("[CALL] found call(elist) at line %d\n", yylineno);
     }
     | lvalue callsuffix {
         Symbol* existingSymbol = symbolTable->lookupSymbol($1->symbol->name, symbolTable->getScope());
 
         if (existingSymbol == nullptr) {
-            existingSymbol = symbolTable->insertSymbol($1->symbol->name, yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+            existingSymbol = symbolTable->insertSymbol($1->symbol->name, yylineno, true, false, functionScopeCount);
         } else {
             bool isTemp = existingSymbol->getName().find("_t") != std::string::npos;
            if (existingSymbol->getFunctionScope() < functionScopeCount && !isMethodCall && !isTemp && existingSymbol->getType() != LIBFUNC) {
@@ -784,21 +785,21 @@ call:
                 yyerror(message);
             }
             isMethodCall = false;
-            $1 = quads->emitIfTableItem($1, yylineno, offsets[symbolTable->getScope()]++);
+            $1 = quads->emitIfTableItem($1, yylineno);
             if ($2->method) {
                 expr* temp = $1;
-                $1 = quads->emitIfTableItem(quads->makeMember(temp, $2->name, offsets[symbolTable->getScope()]++, yylineno), yylineno, offsets[symbolTable->getScope()]++);
+                $1 = quads->emitIfTableItem(quads->makeMember(temp, $2->name, yylineno), yylineno);
                 temp->next = $2->elist;
                 $2->elist = temp;
             }
-            $$ = quads->makeCall($1, $2->elist, yylineno, offsets[symbolTable->getScope()]++);
+            $$ = quads->makeCall($1, $2->elist, yylineno);
         }
         printf("[CALL] found lvalue callsufix at line %d\n", yylineno);
     }
     | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE {
         expr* func = quads->newExpr(programfunc_e);
         func->symbol = $2->symbol;
-        $$ = quads->makeCall(func, $5, yylineno, offsets[symbolTable->getScope()]++);
+        $$ = quads->makeCall(func, $5, yylineno);
         printf("[CALL] found (funcdef)(elist) at line %d\n", yylineno);
     }
     ;
@@ -850,7 +851,7 @@ elist:
 objectdef:
     BRACKET_OPEN elist BRACKET_CLOSE {
         $$ = quads->newExpr(newtable_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
         for (int i = 0; $elist; $elist = $elist->next) {
@@ -867,7 +868,7 @@ objectdef:
     }
     | BRACKET_OPEN indexed BRACKET_CLOSE {
         $$ = quads->newExpr(newtable_e);
-        $$->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        $$->symbol = quads->createTemp();
 
         quads->emit(tablecreate_op, $$, nullptr, nullptr, 0, yylineno);
         expr* index = $indexed;
@@ -907,35 +908,31 @@ indexedelem:
 
 block:
     CURLY_OPEN {
-    if (!isScopeIncreasedByFunction) {
-        symbolTable->incScope();
-        if (offsets.size()-1 < symbolTable->getScope()) {
-            offsets.push_back(0);
+        if (!isScopeIncreasedByFunction) {
+            symbolTable->incScope();
+        } else {
+            isScopeIncreasedByFunction = false;
         }
-    } else {
-        isScopeIncreasedByFunction = false;
-    }
     } stmts CURLY_CLOSE {
         symbolTable->decScope();
-        offsets.at(symbolTable->getScope() + 1) = 0;
         printf("[BLOCK] found {stmts} at line %d\n", yylineno);
     }
     ;
 
 funcdef:
     FUNCTION { functionScopeCount++; inFunction = true; } PAREN_OPEN {
-        Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount, offsets[symbolTable->getScope()]++);
-        $<expr>$ = quads->newExpr(libraryfunc_e);
+        Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount);
+        $<expr>$ = quads->newExpr(programfunc_e);
         $<expr>$->symbol = symbol->toStruct();
         quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
         isScopeIncreasedByFunction = true;
         symbolTable->incScope();
-        if (offsets.size()-1 < symbolTable->getScope()) {
-            offsets.push_back(0);
-        }
+        symbolTable->enterScopeSpace();
+        symbolTable->resetFormalScope();
     } idlist PAREN_CLOSE block {
         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
         functionScopeCount--;
+        symbolTable->exitScopeSpace();
         inFunction = false;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     | FUNCTION { functionScopeCount++; isFunction = true; inFunction = true; } ID
@@ -956,13 +953,13 @@ funcdef:
                  symbol->getScope() != 0
              )
          ) {
-             symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount, offsets[symbolTable->getScope()]++);
+             symbol = symbolTable->insertSymbol($3, yylineno, isFunction, false, functionScopeCount);
          } else if (symbol->getType() == FORMAL || (symbol->getType() == USERFUNC && symbol->getScope() == symbolTable->getScope()) || symbol->getScope() == symbolTable->getScope() - 1 || symbol->getScope() == symbolTable->getScope()) {
              char message[100];
              sprintf(message, "%s cannot be redefined", $3);
              yyerror(message);
          }
-         $<expr>$ = quads->newExpr(libraryfunc_e);
+         $<expr>$ = quads->newExpr(programfunc_e);
          $<expr>$->symbol = symbol->toStruct();
          quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
 
@@ -971,12 +968,12 @@ funcdef:
      PAREN_OPEN {
          isScopeIncreasedByFunction = true;
          symbolTable->incScope();
-         if (offsets.size()-1 < symbolTable->getScope()) {
-             offsets.push_back(0);
-         }
+         symbolTable->enterScopeSpace();
+         symbolTable->resetFormalScope();
      } idlist PAREN_CLOSE block {
          functionScopeCount--;
          quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+         symbolTable->exitScopeSpace();
          inFunction = false;
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     ;
@@ -986,7 +983,7 @@ idlist:
         Symbol* symbol = symbolTable->lookupSymbolScoped($1);
 
          if (symbol == nullptr || (symbol->getScope() == 0 && symbol->getType() != LIBFUNC)) {
-             symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
+             symbol = symbolTable->insertSymbol($1, yylineno, false, true, functionScopeCount);
          } else if (symbol->getFunctionScope() == functionScopeCount && symbol->getType() == LIBFUNC) {
              char message[100];
              sprintf(message, "%s cannot be redefined", $1);
@@ -999,7 +996,7 @@ idlist:
         Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
          if (symbol == nullptr || (symbol->getScope() == 0 && symbol->getType() != LIBFUNC)) {
-             symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount, offsets[symbolTable->getScope()]++);
+             symbol = symbolTable->insertSymbol($3, yylineno, false, true, functionScopeCount);
          } else if (symbol->getFunctionScope() == functionScopeCount || symbol->getType() == LIBFUNC) {
              char message[100];
              sprintf(message, "%s cannot be redefined", $3);
@@ -1032,7 +1029,7 @@ ifprefix:
         falseExpr->boolConst = false;
 
         expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
-        evaluatedShortCircuit->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        evaluatedShortCircuit->symbol = quads->createTemp();
 
         for (int quad : $3->trueList) {
             quads->patchLabel(quad, quads->nextQuad());
@@ -1106,7 +1103,7 @@ whilecond:
         falseExpr->boolConst = false;
 
         expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
-        evaluatedShortCircuit->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        evaluatedShortCircuit->symbol = quads->createTemp();
 
         for (int quad : $2->trueList) {
             quads->patchLabel(quad, quads->nextQuad());
@@ -1173,7 +1170,7 @@ forprefix:
         falseExpr->boolConst = false;
 
         expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
-        evaluatedShortCircuit->symbol = quads->createTemp(offsets[symbolTable->getScope()]++);
+        evaluatedShortCircuit->symbol = quads->createTemp();
 
         for (int quad : $7->trueList) {
             quads->patchLabel(quad, quads->nextQuad());
@@ -1251,9 +1248,9 @@ int main(int argc, char** argv) {
     quads->printQuads();
     printf("\n\n");
 
-    //vm->generate();
-    //vm->print();
-    //vm->createBinaryFile();
+    vm->generate();
+    vm->print();
+    vm->createBinaryFile();
 
     return 0;
 }

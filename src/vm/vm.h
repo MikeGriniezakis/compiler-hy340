@@ -57,6 +57,7 @@ enum vmarg_t {
 struct vmarg {
     vmarg_t type;
     unsigned val;
+    bool empty;
 };
 
 struct instruction {
@@ -75,6 +76,7 @@ struct inclomplete_jump {
 
 class VirtualMachine {
     Quads* quads;
+    SymbolTable* symbolTable;
     std::vector<char *> stringConsts;
     std::vector<double> numConsts;
     std::vector<char *> namedLibfuncs;
@@ -83,7 +85,7 @@ class VirtualMachine {
     std::vector<inclomplete_jump *> inclomplete_jumps;
 
 public:
-    explicit VirtualMachine(Quads* quads): quads(quads) {
+    explicit VirtualMachine(Quads* quads, SymbolTable* table): quads(quads), symbolTable(table) {
     };
 
     unsigned consts_newstring(char* str);

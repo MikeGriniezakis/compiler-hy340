@@ -102,13 +102,13 @@ bool Quads::checkArithmeticExpression(const expr* expr) {
     return expr->type != arithexpr_e || expr->type != constnum_e;
 }
 
-expr* Quads::emitIfTableItem(expr* expr, unsigned line, int offset) {
+expr* Quads::emitIfTableItem(expr* expr, unsigned line) {
     if (expr->type != tableitem_e) {
         return expr;
     }
 
     auto res = this->newExpr(var_e);
-    res->symbol = this->createTemp(offset);
+    res->symbol = this->createTemp();
 
     emit(tablegetelem_op, res, expr, expr->index, 0, line);
 
@@ -116,8 +116,8 @@ expr* Quads::emitIfTableItem(expr* expr, unsigned line, int offset) {
 }
 
 
-expr* Quads::makeMember(expr* lvalue, char* name, unsigned line, int offset) {
-    lvalue = this->emitIfTableItem(lvalue, line, offset);
+expr* Quads::makeMember(expr* lvalue, char* name, unsigned line) {
+    lvalue = this->emitIfTableItem(lvalue, line);
     auto expr = newExpr(tableitem_e);
     expr->index = newExpr(conststring_e);
     expr->index->strConst = strdup(name);
@@ -126,8 +126,8 @@ expr* Quads::makeMember(expr* lvalue, char* name, unsigned line, int offset) {
     return expr;
 }
 
-expr* Quads::makeCall(expr* call, expr* elist, unsigned line, int offset) {
-    expr* func = this->emitIfTableItem(call, line, offset);
+expr* Quads::makeCall(expr* call, expr* elist, unsigned line) {
+    expr* func = this->emitIfTableItem(call, line);
 
     expr* arg = elist;
     while (arg != nullptr) {
@@ -137,23 +137,24 @@ expr* Quads::makeCall(expr* call, expr* elist, unsigned line, int offset) {
 
     emit(call_op, func, nullptr, nullptr, 0, line);
     expr* res = this->newExpr(var_e);
-    res->symbol = this->createTemp(offset);
+    res->symbol = this->createTemp();
     emit(getretval_op, res, nullptr, nullptr, 0, line);
 
     return res;
 }
 
 
-SymbolStruct* Quads::createTemp(int offset) {
+SymbolStruct* Quads::createTemp() {
     auto temp = new SymbolStruct();
     char* name = (char *) malloc(10);
     sprintf(name, "_t%d", this->tempCounter++);
     temp->name = strdup(name);
-    temp->offset = offset;
+    temp->offset = this->symbolTable->currScopeOffset();
+    this->symbolTable->incCurrScopeOffset();
 
     Symbol* existingSymbol = this->symbolTable->lookupSymbolScoped(temp->name);
     if (existingSymbol == nullptr || existingSymbol->getScope() != symbolTable->getScope()) {
-        this->symbolTable->insertSymbol(temp->name, 0, false, false, 0, offset);
+        this->symbolTable->insertSymbol(temp->name, 0, false, false, 0);
     }
 
     return temp;

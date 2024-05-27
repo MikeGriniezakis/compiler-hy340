@@ -143,14 +143,14 @@ public:
     std::vector<Quad*> getQuads();
     Quad* getQuad(unsigned quad);
     void resetTempCounter() { tempCounter = 0; }
-    SymbolStruct* createTemp(int offset);
+    SymbolStruct* createTemp();
     void emit(iopcode code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
     void emit(int code, expr *result, expr *arg1, expr *arg2, unsigned label, unsigned line);
-    expr* emitIfTableItem(expr *result, unsigned line, int offset);
+    expr* emitIfTableItem(expr *result, unsigned line);
     void printQuads();
     expr* newExpr(expr_t type);
-    expr* makeMember(expr* lvalue, char* name, unsigned line, int offset);
-    expr* makeCall(expr* call, expr* elist, unsigned line, int offset);
+    expr* makeMember(expr* lvalue, char* name, unsigned line);
+    expr* makeCall(expr* call, expr* elist, unsigned line);
 
     void patchLabel(unsigned quad, unsigned label);
     bool checkArithmeticExpression(const expr* first, const expr* second);

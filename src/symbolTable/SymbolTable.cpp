@@ -4,6 +4,7 @@
 
 #include "SymbolTable.h"
 
+#include <cassert>
 #include <utility>
 
 SymbolTable::SymbolTable() {
@@ -15,7 +16,7 @@ SymbolTable::SymbolTable() {
 
 void SymbolTable::initializeSTDFunctions() {
     for (const auto &functionName : this->libraryFunctions) {
-        insertSymbol(functionName, 0, true, false, 0, 0);
+        insertSymbol(functionName, 0, true, false, 0);
     }
 }
 
@@ -43,7 +44,7 @@ void SymbolTable::decScope() {
     this->scope--;
 }
 
-Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, bool isFormal, uint functionScope, uint offset) {
+Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, bool isFormal, uint functionScope) {
     SymbolType type;
     if (isFunction) {
         bool foundLib = false;
@@ -67,16 +68,10 @@ Symbol* SymbolTable::insertSymbol(std::string name, uint line, bool isFunction, 
             type = SCOPED;
         }
     }
-    ScopeSpace space;
-    if (isFormal) {
-        space = FORMAL_ARG;
-    } else if (isFunction) {
-        space = FUNCTION_LOCAL;
-    } else {
-        space = PROGRAM_VAR;
-    }
+    ScopeSpace space = this->currScopeSpace();
 
-    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR, functionScope, offset, space);
+    auto* symbol = new Symbol(std::move(name), this->scope, line, type, isFunction ? FUNC : VAR, functionScope, this->currScopeOffset(), space);
+    this->incCurrScopeOffset();
 
     this->symbolTable[symbol->getName()].push_back(symbol);
     this->scopes.at(this->scope).push_back(symbol);
@@ -145,3 +140,52 @@ Symbol* SymbolTable::lookupSymbolScoped(const std::string& name) {
 
     return this->lookupSymbol(name, this->scope);
 }
+
+ScopeSpace SymbolTable::currScopeSpace() {
+    if (this->scopeSpace == 1) {
+        return PROGRAM_VAR;
+    } else if (this->scopeSpace % 2 == 0) {
+        return FORMAL_ARG;
+    } else {
+        return FUNCTION_LOCAL;
+    }
+}
+
+uint SymbolTable::currScopeOffset() {
+    switch (this->currScopeSpace()) {
+        case PROGRAM_VAR:
+            return this->varOffset;
+        case FORMAL_ARG:
+            return this->formalOffset;
+        case FUNCTION_LOCAL:
+            return this->functionLocalOffset;
+        default: assert(0);
+    }
+}
+
+void SymbolTable::incCurrScopeOffset() {
+    switch (this->currScopeSpace()) {
+        case PROGRAM_VAR: ++this->varOffset; break;
+        case FORMAL_ARG: ++this->formalOffset; break;
+        case FUNCTION_LOCAL: ++this->functionLocalOffset; break;
+        default: assert(0);
+    }
+}
+
+void SymbolTable::enterScopeSpace() {
+    ++scopeSpace;
+}
+
+void SymbolTable::exitScopeSpace() {
+    assert(this->scopeSpace > 1);
+    --this->scopeSpace;
+}
+
+void SymbolTable::resetFormalScope() {
+    this-> formalOffset = 0;
+}
+
+unsigned SymbolTable::getVarOffset() {
+    return this->varOffset;
+}
+

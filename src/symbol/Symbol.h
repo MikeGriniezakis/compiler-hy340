@@ -2,7 +2,6 @@
 #define SYMBOL_H
 #include <string>
 #include <utility>
-#include <vector>
 
 enum SymbolType {
     ASSIGNMENT,
@@ -18,7 +17,6 @@ enum ScopeSpace {
     FUNCTION_LOCAL,
     FORMAL_ARG
 };
-
 
 enum SymbolClass {
     FUNC,
