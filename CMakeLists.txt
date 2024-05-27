@@ -21,8 +21,8 @@ add_executable(
         src/symbol/Symbol.cpp
         src/quads/Quads.cpp
         src/quads/Quads.h
-        src/vm/vm.cpp
-        src/vm/vm.h
+        src/targetCode/targetCode.cpp
+        src/targetCode/targetCode.h
         src/generators/generators.h
         src/generators/generators.cpp
 )

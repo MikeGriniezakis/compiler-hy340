@@ -5,7 +5,7 @@
     #include <src/symbolTable/SymbolTable.h>
     #include <sstream>
     #include <src/quads/Quads.h>
-    #include <src/vm/vm.h>
+    #include <src/targetCode/targetCode.h>
 
     int alpha_yyerror (const char* yaccProvidedMessage);
     extern int alpha_yylex(void* ylval);

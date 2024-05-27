@@ -5,7 +5,7 @@
 #ifndef GENERATORS_H
 #define GENERATORS_H
 #include "src/quads/Quads.h"
-#include "src/vm/vm.h"
+#include "src/targetCode/targetCode.h"
 
 extern void generate_ADD(Quad* quad, VirtualMachine* vm);
 
