@@ -6,13 +6,6 @@
 
 #include <cassert>
 
-bool executionFinished = false;
-unsigned pc = 0;
-unsigned currLine = 0;
-unsigned codeSize = 0;
-instruction* code = nullptr;
-#define AVM_ENDING_PC codeSize
-
 void execute_cycle() {
     if (executionFinished) {
         return;

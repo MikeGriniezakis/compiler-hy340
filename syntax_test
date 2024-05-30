@@ -1,1 +1,6 @@
-x = a < b or c < d and e < f;
+x = 10;
+y = "hello";
+function f(x,y) { return x+y; }
+z = "world";
+w = cos(3.1415);
+print(x,y,z,w);

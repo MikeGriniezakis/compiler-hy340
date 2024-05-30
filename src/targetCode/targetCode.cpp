@@ -11,6 +11,7 @@
 #include <sstream>
 #include <unistd.h>
 
+#include "../../../../../../usr/include/stdint.h"
 #include "src/generators/generators.h"
 
 void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
@@ -99,12 +100,16 @@ unsigned VirtualMachine::consts_newnumber(double num) {
 }
 
 unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
-    this->userFuncs.push_back(sym);
+    userfunc* userfunc = new struct userfunc();
+    userfunc->address = sym->tAddress;
+    userfunc->localSize = sym->localSize;
+    userfunc->id = sym->name;
+    this->userFuncs.push_back(userfunc);
     return this->userFuncs.size() - 1;
 }
 
-SymbolStruct* VirtualMachine::userfuncs_getfunc(bool pop) {
-    SymbolStruct* sym = this->userFuncs.back();
+userfunc* VirtualMachine::userfuncs_getfunc(bool pop) {
+    userfunc* sym = this->userFuncs.back();
     if (pop) {
         this->userFuncs.pop_back();
     }
@@ -187,7 +192,7 @@ void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
             typeSS << arg->type << "(nil)";
             break;
         case userfunc_a:
-            typeSS << arg->type << "(user function) " << this->userFuncs.at(arg->val)->name;
+            typeSS << arg->type << "(user function) " << this->userFuncs.at(arg->val)->id;
             break;
         case libfunc_a:
             typeSS << arg->type << "(library function) " << this->namedLibfuncs.at(arg->val);
@@ -267,11 +272,11 @@ void VirtualMachine::createBinaryFile() {
 
     unsigned int userFunctionsSize = userFuncs.size();
     fwrite(&userFunctionsSize, sizeof(unsigned), 1, file);
-    for (SymbolStruct* fun : userFuncs) {
-        fwrite(&fun->name, sizeof(char) * strlen(fun->name), 1, file);
+    for (userfunc* fun : userFuncs) {
+        fwrite(&fun->id, sizeof(char) * strlen(fun->id), 1, file);
         fwrite(&terminator, sizeof(char), 1, file);
 
-        fwrite(&fun->tAddress, sizeof(unsigned), 1, file);
+        fwrite(&fun->address, sizeof(unsigned), 1, file);
         // fwrite(&fun->localSIze, sizeof(unsigned), 1, file);
     }
 

@@ -29,6 +29,14 @@ add_executable(
         src/vm/vm.h
         src/dispatcher/dispatcher.cpp
         src/dispatcher/dispatcher.h
+        src/vm/memory/memory.cpp
+        src/vm/memory/memory.h
+        src/dispatcher/dispatch_assign.cpp
+        src/dispatcher/dispatcher_functions.cpp
+        src/vm/toString/toString.cpp
+        src/vm/toString/toString.h
+        src/dispatcher/dispatch_numeric.cpp
+        src/dispatcher/dispatch_comparison.cpp
 )
 target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(

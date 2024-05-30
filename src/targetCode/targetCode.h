@@ -68,6 +68,12 @@ struct instruction {
     unsigned srcLine;
 };
 
+struct userfunc {
+    unsigned address;
+    unsigned localSize;
+    char* id;
+};
+
 struct inclomplete_jump {
     unsigned instrNo;
     unsigned iaddress;
@@ -81,7 +87,7 @@ class VirtualMachine {
     std::vector<double> numConsts;
     std::vector<char *> namedLibfuncs;
     std::vector<instruction *> instructions;
-    std::vector<SymbolStruct *> userFuncs;
+    std::vector<userfunc *> userFuncs;
     std::vector<inclomplete_jump *> inclomplete_jumps;
 
 public:
@@ -96,7 +102,7 @@ public:
 
     unsigned userfuncs_newfunc(SymbolStruct* sym);
 
-    SymbolStruct* userfuncs_getfunc(bool pop);
+    userfunc* userfuncs_getfunc(bool pop);
 
     void resetOperand(vmarg* arg);
 

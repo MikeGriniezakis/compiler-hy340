@@ -29,6 +29,7 @@ struct SymbolStruct {
     int line;
     int offset;
     unsigned tAddress;
+    unsigned localSize;
     ScopeSpace scope_space;
     SymbolClass symbol_class;
     SymbolType type;
@@ -42,6 +43,7 @@ class Symbol {
     const uint function_scope;
     const uint line;
     const unsigned tAddress;
+    const unsigned localSize;
     const ScopeSpace scope_space;
     const SymbolType type;
     const SymbolClass symbol_class;
@@ -55,6 +57,7 @@ public:
     offset(offset),
     scope_space(scope_space),
     tAddress(0),
+    localSize(0),
     type(type) {
         this->active = true;
     }

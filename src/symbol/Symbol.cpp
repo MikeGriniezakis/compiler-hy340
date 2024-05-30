@@ -48,6 +48,7 @@ SymbolStruct* Symbol::toStruct() {
     symbolStruct->offset = this->offset;
     symbolStruct->scope_space = this->scope_space;
     symbolStruct->tAddress = this->tAddress;
+    symbolStruct->localSize = this->localSize;
 
     return symbolStruct;
 }

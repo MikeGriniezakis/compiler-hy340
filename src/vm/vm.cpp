@@ -7,6 +7,8 @@
 #include <cassert>
 #include <cstring>
 
+#include "src/dispatcher/dispatcher.h"
+
 extern avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg) {
     switch (arg->type) {
         case global_a: return &avm_stack.at(AVM_STACKSIZE - 1 - arg->val);
@@ -43,5 +45,14 @@ extern avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg) {
             return reg;
         }
         default: assert(0);
+    }
+}
+
+void avm_dec_top() {
+    if (!top) {
+        fprintf(stderr, "stack overflow\n");
+        executionFinished = true;
+    } else {
+        --top;
     }
 }

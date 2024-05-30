@@ -67,6 +67,10 @@
             if (insert) {
                 Symbol* savedSymbol = symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
                 symbol->offset = savedSymbol->getOffset();
+                symbol->symbol_class = savedSymbol->getSymbolClass();
+                symbol->scope = savedSymbol->getScope();
+                symbol->type = savedSymbol->getType();
+                printf("%s %d\n", symbol->name, symbol->symbol_class);
             }
             isFunction = false;
             return;
@@ -80,6 +84,9 @@
                 if (insert) {
                     Symbol* savedSymbol = symbolTable->insertSymbol(symbol->name, symbol->line, isFunction, false, functionScopeCount);
                     symbol->offset = savedSymbol->getOffset();
+                    symbol->symbol_class = savedSymbol->getSymbolClass();
+                    symbol->scope = savedSymbol->getScope();
+                    symbol->type = savedSymbol->getType();
                 }
                 isFunction = false;
                 break;
@@ -530,11 +537,12 @@ assignexpr:
             $$ = quads->emitIfTableItem($1, yylineno);
             $$->type = assignexpr_e;
         } else {
+            insertToken($1->symbol, false, true);
+            printf("%s %d\n", $1->symbol->name, $1->symbol->symbol_class);
             quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
             $$ = quads->newExpr(assignexpr_e);
             $$->symbol = quads->createTemp();
             quads->emit(assign_op, $$, $1, nullptr, 0, yylineno);
-            insertToken($1->symbol, false, true);
         }
 
         printf("[ASSIGNEXPR] found lvalue = expr at line %d\n", yylineno);
@@ -934,6 +942,7 @@ funcdef:
     } idlist PAREN_CLOSE block {
         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
         functionScopeCount--;
+        $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
         symbolTable->exitScopeSpace();
         inFunction = false;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
@@ -975,6 +984,7 @@ funcdef:
      } idlist PAREN_CLOSE block {
          functionScopeCount--;
          quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+         $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
          symbolTable->exitScopeSpace();
          inFunction = false;
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
