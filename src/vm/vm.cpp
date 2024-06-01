@@ -10,21 +10,19 @@
 #include <fstream>
 #include <unistd.h>
 
+#include "memory/memory.h"
 #include "src/dispatcher/dispatcher.h"
 
 double consts_getnumber(unsigned index) {
-    // TODO: Implement this function
-    return 0;
+    return numConsts.at(index);
 }
 
 char* consts_getstring(unsigned index) {
-    // TODO: Implement this function
-    return "";
+    return stringConsts.at(index);
 }
 
 char* libfuncs_getused(unsigned index) {
-    // TODO: Implement this function
-    return "";
+    return namedLibfuncs.at(index);
 }
 
 extern avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg) {
@@ -338,6 +336,11 @@ void readBinaryFile() {
 void avm_initstack() {
     topsp = AVM_STACKSIZE - 1;
     top = AVM_STACKSIZE - 1;
+
+    for (unsigned i = 0; i < AVM_STACKSIZE; i++) {
+        AVM_WIPEOUT(avm_stack.at(i));
+        avm_stack.at(i).type = undef_m;
+    }
     for (int i = 0; i < globalVarCount; i++) {
         avm_stack[top].data.numVal = i;
         avm_dec_top();
@@ -360,6 +363,7 @@ void avm_initstack() {
 
 int main(int argc, char* argv[]) {
     readBinaryFile();
+    avm_initstack();
 
     while (!executionFinished) {
         execute_cycle();

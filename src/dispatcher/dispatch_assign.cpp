@@ -28,7 +28,7 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv) {
 }
 
 extern void execute_assign (instruction* instr) {
-    avm_memcell* lv = avm_translate_operand(&instr->result, (avm_memcell*)nullptr);
+    avm_memcell* lv = avm_translate_operand(&instr->result, nullptr);
     avm_memcell* rv = avm_translate_operand(&instr->arg1, &ax);
 
     assert(lv && (&avm_stack[AVM_STACKSIZE - 1] >= lv && lv > &avm_stack[top] || lv == &retval));

@@ -29,7 +29,6 @@ extern void execute_call (instruction* instr) {
             char* s = avm_to_string(func);
             // avm_error("call: cannot bind '%s' to function!", s);
             fprintf(stderr, "call: cannot bind '%s' to function!", s);
-            free(s);
             executionFinished = true;
     }
 }
@@ -59,16 +58,23 @@ extern void execute_funcenter (instruction* instr) {
 extern void execute_funcexit (instruction* instr) {
     unsigned oldTop = top;
     top = avm_get_env_value(topsp + AVM_SAVEDTOP_OFFSET);
-    topsp = avm_get_env_value(topsp + AVM_SAVEDTOPSP_OFFSET);
     pc = avm_get_env_value(topsp + AVM_SAVEDPC_OFFSET);
+    topsp = avm_get_env_value(topsp + AVM_SAVEDTOPSP_OFFSET);
     while (++oldTop  <= top) {
         avm_memcellclear(&avm_stack.at(oldTop));
     }
 }
 
 library_func_t avm_get_library_func(char* id) {
-    // TODO: Implement this function
-    return nullptr;
+    return libFuncs.at(id);
+}
+
+extern unsigned avm_totalactuals() {
+    return avm_get_env_value(topsp + AVM_NUMACTUALS_OFFSET);
+}
+
+extern avm_memcell* avm_getactual(unsigned i) {
+    return &avm_stack[topsp + AVM_STACKENV_SIZE + 1 + i];
 }
 
 extern void avm_call_lib_func(char* funcName) {

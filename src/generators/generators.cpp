@@ -191,9 +191,8 @@ extern void generate_GETRETVAL(Quad* quad, VirtualMachine* vm) {
     auto t = new instruction();
     t->opcode = assign_v;
     vm->makeOperand(quad->getResult(), &t->result);
-    vm->makeOperand(quad->getArg1(), &t->arg1);
+    vm->makeRetvalOperand(&t->arg1);
     vm->makeOperand(quad->getArg2(), &t->arg2);
-    vm->makeRetvalOperand(&t->result);
     vm->emit(t);
 }
 

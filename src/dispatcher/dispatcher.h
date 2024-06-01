@@ -18,6 +18,8 @@ typedef void (*execute_func_t)(instruction*);
 typedef void (*library_func_t)();
 library_func_t avm_get_library_func(char* id);
 
+inline std::map<std::string, library_func_t> libFuncs;
+
 inline bool executionFinished = false;
 inline unsigned pc = 0;
 inline unsigned currLine = 0;
@@ -101,7 +103,7 @@ extern void avm_call_save_env();
 extern void avm_push_env_value(unsigned val);
 extern unsigned avm_get_env_value(unsigned i);
 extern userfunc* avm_get_func_info(unsigned pc);
-extern void avm_totalactuals();
+extern unsigned avm_totalactuals();
 extern avm_memcell* avm_getactual(unsigned i);
 extern void libfunc_print();
 extern void avm_registerlibfunc(char* id, library_func_t addr);
