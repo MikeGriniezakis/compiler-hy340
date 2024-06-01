@@ -50,6 +50,7 @@ add_executable(vm
         src/vm/toBool/toBool.cpp
         src/vm/toBool/toBool.h
         src/dispatcher/dispatch_table.cpp
+        src/dispatcher/dispatcher_libfuncs.cpp
 )
 
 target_include_directories(vm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
