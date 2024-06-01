@@ -100,7 +100,7 @@ unsigned VirtualMachine::consts_newnumber(double num) {
 }
 
 unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
-    userfunc* userfunc = new struct userfunc();
+    auto* userfunc = new struct userfunc();
     userfunc->address = sym->tAddress;
     userfunc->localSize = sym->localSize;
     userfunc->id = sym->name;
@@ -273,7 +273,10 @@ void VirtualMachine::createBinaryFile() {
     unsigned int userFunctionsSize = userFuncs.size();
     fwrite(&userFunctionsSize, sizeof(unsigned), 1, file);
     for (userfunc* fun : userFuncs) {
-        fwrite(&fun->id, sizeof(char) * strlen(fun->id), 1, file);
+        std::string id = fun->id;
+        for (char c : id) {
+            fwrite(&c, sizeof(char), 1, file);
+        }
         fwrite(&terminator, sizeof(char), 1, file);
 
         fwrite(&fun->address, sizeof(unsigned), 1, file);

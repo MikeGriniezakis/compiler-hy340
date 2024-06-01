@@ -11,11 +11,12 @@
 extern void execute_call (instruction* instr) {
     avm_memcell* func = avm_translate_operand(&instr->result, &ax);
     assert(func);
+    restorePc = pc;
     avm_call_save_env();
 
     switch (func->type) {
         case userfunc_m:
-            pc = func->data.funcVal;
+            pc = userFuncs.at(func->data.funcVal)->address;
             assert(pc < AVM_ENDING_PC.size());
             assert(instructions.at(pc)->opcode == funcenter_v);
             break;
@@ -34,13 +35,9 @@ extern void execute_call (instruction* instr) {
 }
 
 extern userfunc* avm_get_func_info(unsigned pc) {
-    // TODO: Implement this function
-    assert(0 && "not implemented yet");
-    // for (unsigned i = 0; i < symbolTable.size(); i++) {
-    //     if (userFuncs.at(i).address == pc) {
-    //         return &userFuncs.at(i);
-    //     }
-    // }
+    if (userFuncs.at(pc)->address == pc) {
+        return userFuncs.at(pc);
+    }
     return nullptr;
 }
 
@@ -56,6 +53,10 @@ extern void execute_funcenter (instruction* instr) {
 }
 
 extern void execute_funcexit (instruction* instr) {
+    if (avm_stack.at(restorePc).type != call_v) {
+        return;
+    }
+
     unsigned oldTop = top;
     top = avm_get_env_value(topsp + AVM_SAVEDTOP_OFFSET);
     pc = avm_get_env_value(topsp + AVM_SAVEDPC_OFFSET);

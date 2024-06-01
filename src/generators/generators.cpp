@@ -201,8 +201,6 @@ extern void generate_FUNCSTART(Quad* quad, VirtualMachine* vm) {
     f->tAddress = vm->nextInstructionLabel();
     quad->setTAddress(vm->nextInstructionLabel());
 
-    vm->userfuncs_newfunc(f);
-
     auto t = new instruction();
     t->opcode = funcenter_v;
     vm->makeOperand(quad->getResult(), &t->result);
@@ -216,19 +214,9 @@ extern void generate_RETURN(Quad* quad, VirtualMachine* vm) {
     vm->makeRetvalOperand(&t->result);
     vm->makeOperand(quad->getArg1(), &t->arg1);
     vm->emit(t);
-
-    auto f = vm->userfuncs_getfunc(false);
-
-    t->opcode = jump_v;
-    vm->resetOperand(&t->arg1);
-    vm->resetOperand(&t->arg2);
-    t->result.type = label_a;
-    vm->emit(t);
 }
 
 extern void generate_FUNCEND(Quad* quad, VirtualMachine* vm) {
-    auto f = vm->userfuncs_getfunc(true);
-
     quad->setTAddress(vm->nextInstructionLabel());
     auto t = new instruction();
     t->opcode = funcexit_v;

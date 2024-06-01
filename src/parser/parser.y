@@ -722,6 +722,14 @@ lvalue:
         if (existingSymbol == nullptr) {
             $$->symbol = symbolStruct;
         } else {
+            switch (existingSymbol->getType()) {
+                case USERFUNC:
+                    $$->type = programfunc_e;
+                    break;
+                default:
+                    $$->type = var_e;
+                    break;
+            }
             $$->symbol = existingSymbol->toStruct();
         }
         $$->symbol->type = ASSIGNMENT;

@@ -22,6 +22,7 @@ inline std::map<std::string, library_func_t> libFuncs;
 
 inline bool executionFinished = false;
 inline unsigned pc = 0;
+inline unsigned restorePc = 0;
 inline unsigned currLine = 0;
 #define AVM_ENDING_PC instructions
 
@@ -115,29 +116,29 @@ extern void execute_nop (instruction*);
 
 inline execute_func_t executeFuncs[] = {
         execute_assign,
-        execute_mul,
-        execute_uminus,
-        execute_not,
-        execute_jle,
-        execute_jgt,
-        execute_funcenter,
-        execute_tablegetelem,
         execute_add,
-        execute_div,
-        execute_and,
-        execute_jeq,
-        execute_jge,
-        execute_call,
-        execute_funcexit,
-        execute_tablesetelem,
         execute_sub,
+        execute_mul,
+        execute_div,
         execute_mod,
+        execute_uminus,
+        execute_and,
         execute_or,
+        execute_not,
+        execute_jeq,
         execute_jne,
+        execute_jle,
+        execute_jge,
         execute_jlt,
+        execute_jgt,
+        execute_call,
         execute_pusharg,
+        execute_funcenter,
+        execute_funcexit,
         execute_newtable,
-        execute_nop
+        execute_tablegetelem,
+        execute_tablesetelem,
+        execute_nop,
 };
 
 extern void execute_cycle();
