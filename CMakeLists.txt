@@ -25,6 +25,16 @@ add_executable(
         src/targetCode/targetCode.h
         src/generators/generators.h
         src/generators/generators.cpp
+)
+
+target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(
+        hy340
+        ${FLEX_LIBRARIES}
+        ${BISON_LIBRARIES}
+)
+
+add_executable(vm
         src/vm/vm.cpp
         src/vm/vm.h
         src/dispatcher/dispatcher.cpp
@@ -37,10 +47,10 @@ add_executable(
         src/vm/toString/toString.h
         src/dispatcher/dispatch_numeric.cpp
         src/dispatcher/dispatch_comparison.cpp
+        src/vm/toBool/toBool.cpp
+        src/vm/toBool/toBool.h
+        src/dispatcher/dispatch_table.cpp
 )
-target_include_directories(hy340 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(
-        hy340
-        ${FLEX_LIBRARIES}
-        ${BISON_LIBRARIES}
-)
+
+target_include_directories(vm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(vm)

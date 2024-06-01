@@ -54,6 +54,13 @@ inline std::vector<avm_memcell> avm_stack = std::vector<avm_memcell>(AVM_STACKSI
 inline avm_memcell ax, bx, cx;
 inline avm_memcell retval;
 inline unsigned top, topsp;
+inline std::vector<char *> stringConsts;
+inline std::vector<double> numConsts;
+inline std::vector<char *> namedLibfuncs;
+inline std::vector<userfunc *> userFuncs;
+inline std::vector<instruction *> instructions;
+inline unsigned globalVarCount;
+
 
 double consts_getnumber(unsigned index);
 char* consts_getstring(unsigned index);
@@ -62,7 +69,7 @@ char* libfuncs_getused(unsigned index);
 extern void avm_dec_top();
 
 extern avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg);
-extern avm_memcell* avm_table_get_elem(avm_memcell* key);
-extern avm_memcell* avm_table_set_elem(avm_memcell* key, avm_memcell* value);
+extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key);
+extern avm_memcell* avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value);
 
 #endif //VM_H

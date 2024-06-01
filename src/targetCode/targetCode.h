@@ -7,9 +7,31 @@
 #include "src/quads/Quads.h"
 
 enum vmopcode {
-    assign_v, mul_v, uminus_v, not_v, jle_v, jgt_v, funcenter_v, tablegetelem_v,
-    add_v, div_v, and_v, jeq_v, jge_v, call_v, funcexit_v, tablesetelem_v,
-    sub_v, mod_v, or_v, jne_v, jlt_v, pusharg_v, newtable_v, nop_v, jump_v
+    assign_v,
+    mul_v,
+    uminus_v,
+    not_v,
+    jle_v,
+    jgt_v,
+    funcenter_v,
+    tablegetelem_v,
+    add_v,
+    div_v,
+    and_v,
+    jeq_v,
+    jge_v,
+    call_v,
+    funcexit_v,
+    tablesetelem_v,
+    sub_v,
+    mod_v,
+    or_v,
+    jne_v,
+    jlt_v,
+    pusharg_v,
+    newtable_v,
+    nop_v,
+    jump_v
 };
 
 inline std::string vmopcodeNames[] = {

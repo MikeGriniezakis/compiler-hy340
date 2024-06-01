@@ -170,7 +170,9 @@ extern void generate_PARAM(Quad* quad, VirtualMachine* vm) {
     quad->setTAddress(vm->nextInstructionLabel());
     auto t = new instruction();
     t->opcode = pusharg_v;
+    vm->makeOperand(quad->getResult(), &t->result);
     vm->makeOperand(quad->getArg1(), &t->arg1);
+    vm->makeOperand(quad->getArg2(), &t->arg2);
     vm->emit(t);
 }
 
@@ -178,7 +180,9 @@ extern void generate_CALL(Quad* quad, VirtualMachine* vm) {
     quad->setTAddress(vm->nextInstructionLabel());
     auto t = new instruction();
     t->opcode = call_v;
+    vm->makeOperand(quad->getResult(), &t->result);
     vm->makeOperand(quad->getArg1(), &t->arg1);
+    vm->makeOperand(quad->getArg2(), &t->arg2);
     vm->emit(t);
 }
 
@@ -187,7 +191,9 @@ extern void generate_GETRETVAL(Quad* quad, VirtualMachine* vm) {
     auto t = new instruction();
     t->opcode = assign_v;
     vm->makeOperand(quad->getResult(), &t->result);
-    vm->makeRetvalOperand(&t->arg1);
+    vm->makeOperand(quad->getArg1(), &t->arg1);
+    vm->makeOperand(quad->getArg2(), &t->arg2);
+    vm->makeRetvalOperand(&t->result);
     vm->emit(t);
 }
 

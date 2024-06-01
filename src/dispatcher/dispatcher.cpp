@@ -11,13 +11,13 @@ void execute_cycle() {
         return;
     }
 
-    if (pc == AVM_ENDING_PC) {
+    if (pc == AVM_ENDING_PC.size()) {
         executionFinished = true;
         return;
     }
 
-    assert(pc < AVM_ENDING_PC);
-    instruction* instr = code + pc;
+    assert(pc < AVM_ENDING_PC.size());
+    instruction* instr = instructions.at(pc);
     assert(
         instr->opcode >= 0 &&
         instr->opcode <= AVM_MAX_INSTRUCTIONS

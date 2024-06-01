@@ -70,7 +70,6 @@
                 symbol->symbol_class = savedSymbol->getSymbolClass();
                 symbol->scope = savedSymbol->getScope();
                 symbol->type = savedSymbol->getType();
-                printf("%s %d\n", symbol->name, symbol->symbol_class);
             }
             isFunction = false;
             return;
@@ -538,7 +537,6 @@ assignexpr:
             $$->type = assignexpr_e;
         } else {
             insertToken($1->symbol, false, true);
-            printf("%s %d\n", $1->symbol->name, $1->symbol->symbol_class);
             quads->emit(assign_op, $1, $3, nullptr, 0, yylineno);
             $$ = quads->newExpr(assignexpr_e);
             $$->symbol = quads->createTemp();

@@ -277,7 +277,7 @@ void VirtualMachine::createBinaryFile() {
         fwrite(&terminator, sizeof(char), 1, file);
 
         fwrite(&fun->address, sizeof(unsigned), 1, file);
-        // fwrite(&fun->localSIze, sizeof(unsigned), 1, file);
+        fwrite(&fun->localSize, sizeof(unsigned), 1, file);
     }
 
     unsigned int instructionsSize = instructions.size();
@@ -290,7 +290,6 @@ void VirtualMachine::createBinaryFile() {
         if (!instruction->result.empty) {
             fwrite(&instruction->result.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->result.val, sizeof(unsigned), 1, file);
-            fwrite(&terminator, sizeof(char), 1, file);
         }
 
         unsigned isArg1Null = instruction->arg1.empty;
@@ -298,10 +297,6 @@ void VirtualMachine::createBinaryFile() {
         if (!isArg1Null) {
             fwrite(&instruction->arg1.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->arg1.val, sizeof(unsigned), 1, file);
-            // for (char c : instruction->arg1.name) {
-            //     fwrite(&c, sizeof(char), 1, file);
-            // }
-            fwrite(&terminator, sizeof(char), 1, file);
         }
 
         unsigned isArg2Null = instruction->arg2.empty;
@@ -309,10 +304,6 @@ void VirtualMachine::createBinaryFile() {
         if (!isArg2Null) {
             fwrite(&instruction->arg2.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->arg2.val, sizeof(unsigned), 1, file);
-            // for (char c : instruction->arg2.name) {
-            //     fwrite(&c, sizeof(char), 1, file);
-            // }
-            fwrite(&terminator, sizeof(char), 1, file);
         }
 
         fwrite(&instruction->srcLine, sizeof(unsigned), 1, file);

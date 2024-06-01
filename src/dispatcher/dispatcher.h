@@ -7,7 +7,7 @@
 #include "src/targetCode/targetCode.h"
 #include "src/vm/vm.h"
 
-#define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
+#define AVM_MAX_INSTRUCTIONS (unsigned) 25
 #define AVM_NUMACTUALS_OFFSET 4
 #define AVM_SAVEDPC_OFFSET 3
 #define AVM_SAVEDTOP_OFFSET 2
@@ -21,9 +21,7 @@ library_func_t avm_get_library_func(char* id);
 inline bool executionFinished = false;
 inline unsigned pc = 0;
 inline unsigned currLine = 0;
-inline unsigned codeSize = 0;
-inline instruction* code = nullptr;
-#define AVM_ENDING_PC codeSize
+#define AVM_ENDING_PC instructions
 
 extern void execute_assign (instruction*);
 extern void avm_assign(avm_memcell* lv, avm_memcell* rv);
@@ -86,8 +84,6 @@ extern void execute_jge (instruction*);
 extern void execute_jlt (instruction*);
 extern void execute_jgt (instruction*);
 
-#define execute_jeq execute_comparison
-#define execute_jne execute_comparison
 #define execute_jle execute_comparison
 #define execute_jge execute_comparison
 #define execute_jlt execute_comparison
@@ -117,29 +113,31 @@ extern void execute_nop (instruction*);
 
 inline execute_func_t executeFuncs[] = {
         execute_assign,
-        execute_add,
-        execute_sub,
         execute_mul,
-        execute_div,
-        execute_mod,
         execute_uminus,
-        execute_and,
-        execute_or,
-        execute_jeq,
-        execute_jne,
-        execute_jle,
-        execute_jge,
-        execute_jlt,
-        execute_jgt,
         execute_not,
-        execute_call,
-        execute_pusharg,
+        execute_jle,
+        execute_jgt,
         execute_funcenter,
-        execute_funcexit,
-        execute_newtable,
         execute_tablegetelem,
+        execute_add,
+        execute_div,
+        execute_and,
+        execute_jeq,
+        execute_jge,
+        execute_call,
+        execute_funcexit,
         execute_tablesetelem,
+        execute_sub,
+        execute_mod,
+        execute_or,
+        execute_jne,
+        execute_jlt,
+        execute_pusharg,
+        execute_newtable,
         execute_nop
 };
+
+extern void execute_cycle();
 
 #endif //DISPATCHER_H

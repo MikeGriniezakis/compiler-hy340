@@ -16,8 +16,8 @@ extern void execute_call (instruction* instr) {
     switch (func->type) {
         case userfunc_m:
             pc = func->data.funcVal;
-            assert(pc < AVM_ENDING_PC);
-            assert(code[pc].opcode == funcenter_v);
+            assert(pc < AVM_ENDING_PC.size());
+            assert(instructions.at(pc)->opcode == funcenter_v);
             break;
         case libfunc_m:
             avm_call_lib_func(func->data.libfuncVal);
@@ -35,6 +35,7 @@ extern void execute_call (instruction* instr) {
 }
 
 extern userfunc* avm_get_func_info(unsigned pc) {
+    // TODO: Implement this function
     assert(0 && "not implemented yet");
     // for (unsigned i = 0; i < symbolTable.size(); i++) {
     //     if (userFuncs.at(i).address == pc) {
@@ -63,6 +64,11 @@ extern void execute_funcexit (instruction* instr) {
     while (++oldTop  <= top) {
         avm_memcellclear(&avm_stack.at(oldTop));
     }
+}
+
+library_func_t avm_get_library_func(char* id) {
+    // TODO: Implement this function
+    return nullptr;
 }
 
 extern void avm_call_lib_func(char* funcName) {
