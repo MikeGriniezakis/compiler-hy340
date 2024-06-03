@@ -12,6 +12,10 @@ bool Symbol::isActive() const {
     return this->active;
 }
 
+ScopeSpace Symbol::getScopeSpace() const {
+    return this->scope_space;
+}
+
 void Symbol::setActive(bool active) {
     this->active = active;
 }

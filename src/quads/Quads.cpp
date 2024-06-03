@@ -154,7 +154,9 @@ SymbolStruct* Quads::createTemp() {
 
     Symbol* existingSymbol = this->symbolTable->lookupSymbolScoped(temp->name);
     if (existingSymbol == nullptr || existingSymbol->getScope() != symbolTable->getScope()) {
-        this->symbolTable->insertSymbol(temp->name, 0, false, false, 0);
+        Symbol* symbol = this->symbolTable->insertSymbol(temp->name, 0, false, false, 0);
+        temp->scope = symbol->getScope();
+        temp->scope_space = symbol->getScopeSpace();
     }
 
     return temp;

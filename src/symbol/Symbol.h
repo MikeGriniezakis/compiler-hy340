@@ -71,6 +71,7 @@ public:
     uint getFunctionScope();
     SymbolType getType() const;
     SymbolClass getSymbolClass() const;
+    ScopeSpace getScopeSpace() const;
     void setActive(bool active);
 
     void print();

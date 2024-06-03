@@ -334,17 +334,11 @@ void readBinaryFile() {
 }
 
 void avm_initstack() {
+    top = AVM_STACKSIZE - 1 - globalVarCount;
     topsp = AVM_STACKSIZE - 1;
-    top = AVM_STACKSIZE - 1;
-
     for (unsigned i = 0; i < AVM_STACKSIZE; i++) {
         AVM_WIPEOUT(avm_stack.at(i));
         avm_stack.at(i).type = undef_m;
-    }
-    for (int i = 0; i < globalVarCount; i++) {
-        avm_stack[top].data.numVal = i;
-        avm_dec_top();
-        topsp--;
     }
 
     avm_registerlibfunc("print", libfunc_print);

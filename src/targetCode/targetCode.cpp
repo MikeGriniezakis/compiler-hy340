@@ -189,9 +189,13 @@ void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
             typeSS << arg->type << "(label) " << arg->val;
             break;
         case global_a:
-        case formal_a:
-        case local_a:
             typeSS << arg->type << "(global), " << arg->val;
+            break;
+        case formal_a:
+            typeSS << arg->type << "(formal), " << arg->val;
+            break;
+        case local_a:
+            typeSS << arg->type << "(local), " << arg->val;
             break;
         case number_a:
             typeSS << arg->type << "(number), " << arg->val << ':' << numConsts.at(arg->val);

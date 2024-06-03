@@ -953,7 +953,7 @@ funcdef:
         symbolTable->incScope();
         symbolTable->enterScopeSpace();
         symbolTable->resetFormalScope();
-    } idlist PAREN_CLOSE block {
+    } idlist PAREN_CLOSE { symbolTable->enterScopeSpace(); } block {
         for (int i = 0; i < returnNumbers.at(functionScopeCount); i++) {
             quads->patchLabel(returnStack.top(), quads->nextQuad());
             returnStack.pop();
@@ -963,6 +963,7 @@ funcdef:
         functionScopeCount--;
         $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
         quads->patchLabel($<intValue>1, quads->nextQuad());
+        symbolTable->exitScopeSpace();
         symbolTable->exitScopeSpace();
         inFunction = false;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
@@ -1008,7 +1009,7 @@ funcdef:
          symbolTable->incScope();
          symbolTable->enterScopeSpace();
          symbolTable->resetFormalScope();
-     } idlist PAREN_CLOSE block {
+     } idlist PAREN_CLOSE { symbolTable->enterScopeSpace(); } block {
          for (int i = 0; i < returnNumbers.at(functionScopeCount); i++) {
              quads->patchLabel(returnStack.top(), quads->nextQuad());
              returnStack.pop();
@@ -1018,6 +1019,7 @@ funcdef:
          functionScopeCount--;
          $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
          quads->patchLabel($<intValue>1, quads->nextQuad());
+         symbolTable->exitScopeSpace();
          symbolTable->exitScopeSpace();
          inFunction = false;
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
