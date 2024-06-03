@@ -149,12 +149,11 @@ SymbolStruct* Quads::createTemp() {
     char* name = (char *) malloc(10);
     sprintf(name, "_t%d", this->tempCounter++);
     temp->name = strdup(name);
-    temp->offset = this->symbolTable->currScopeOffset();
-    this->symbolTable->incCurrScopeOffset();
 
     Symbol* existingSymbol = this->symbolTable->lookupSymbolScoped(temp->name);
     if (existingSymbol == nullptr || existingSymbol->getScope() != symbolTable->getScope()) {
         Symbol* symbol = this->symbolTable->insertSymbol(temp->name, 0, false, false, 0);
+        temp->offset = symbol->getOffset();
         temp->scope = symbol->getScope();
         temp->scope_space = symbol->getScopeSpace();
     }

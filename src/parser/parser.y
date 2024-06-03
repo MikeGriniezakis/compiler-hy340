@@ -301,7 +301,7 @@ expr:
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp();
         quads->emit(mod_op, $$, $1, $3, 0, yylineno);
-        printf("[EXPR] found expr % expr at line %d\n", yylineno);
+        printf("[EXPR] found expr %% expr at line %d\n", yylineno);
     }
     | expr GT expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -406,7 +406,7 @@ expr:
 
         quads->emit(if_eq_op, nullptr, $1, $3, 0, yylineno);
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
-        printf("[EXPR] found expr > expr at line %d\n", yylineno);
+        printf("[EXPR] found expr == expr at line %d\n", yylineno);
     }
     | expr DIFF expr  {
         if (!quads->checkArithmeticExpression($1, $3)) {
@@ -1003,13 +1003,12 @@ funcdef:
          quads->emit(funcstart_op, $<expr>$, nullptr, nullptr, 0, yylineno);
 
          isFunction = false;
-     }
-     PAREN_OPEN {
+    } PAREN_OPEN {
          isScopeIncreasedByFunction = true;
          symbolTable->incScope();
          symbolTable->enterScopeSpace();
          symbolTable->resetFormalScope();
-     } idlist PAREN_CLOSE { symbolTable->enterScopeSpace(); } block {
+    } idlist PAREN_CLOSE { symbolTable->enterScopeSpace(); } block {
          for (int i = 0; i < returnNumbers.at(functionScopeCount); i++) {
              quads->patchLabel(returnStack.top(), quads->nextQuad());
              returnStack.pop();
@@ -1022,7 +1021,7 @@ funcdef:
          symbolTable->exitScopeSpace();
          symbolTable->exitScopeSpace();
          inFunction = false;
-     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
+    } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     ;
 
 idlist:
