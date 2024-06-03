@@ -404,7 +404,7 @@ expr:
         $$->trueList.push_back(quads->nextQuad());
         $$->falseList.push_back(quads->nextQuad() + 1);
 
-        quads->emit(if_eq_op, $$, $1, $3, 0, yylineno);
+        quads->emit(if_eq_op, nullptr, $1, $3, 0, yylineno);
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[EXPR] found expr > expr at line %d\n", yylineno);
     }
@@ -940,9 +940,7 @@ block:
 funcdef:
     FUNCTION {
         functionScopeCount++;
-        if (returnNumbers.size()-1 < functionScopeCount) {
-            returnNumbers.push_back(0);
-        }
+        returnNumbers.push_back(0);
         inFunction = true;
         $<intValue>1 = quads->nextQuad();
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
@@ -970,9 +968,7 @@ funcdef:
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
     | FUNCTION {
         functionScopeCount++;
-        if (returnNumbers.size()-1 < functionScopeCount) {
-            returnNumbers.push_back(0);
-        }
+        returnNumbers.push_back(0);
         isFunction = true;
         inFunction = true;
         $<intValue>1 = quads->nextQuad();
@@ -1091,7 +1087,7 @@ ifprefix:
         quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
         quads->emit(assign_op, evaluatedShortCircuit, falseExpr, nullptr, 0, yylineno);
 
-        quads->emit(if_eq_op, evaluatedShortCircuit, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        quads->emit(if_eq_op, nullptr, evaluatedShortCircuit, trueExpr, quads->nextQuad() + 2, yylineno);
         $$ = quads->nextQuad();
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
@@ -1257,10 +1253,9 @@ returnstmt:
         }
     } expr SEMICOLON {
         quads->emit(ret_op, nullptr, $3, nullptr, 0, yylineno);
-        // TODO: enable and fix
-        //returnNumbers.at(functionScopeCount)++;
-        //returnStack.push(quads->nextQuad());
-        //quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        returnNumbers.at(functionScopeCount)++;
+        returnStack.push(quads->nextQuad());
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[RETURNSTMT] found return expr; at line %d\n", yylineno);
     }
     | RETURN {
@@ -1270,9 +1265,9 @@ returnstmt:
     } SEMICOLON {
         printf("[RETURNSTMT] found return; at line %d\n", yylineno);
         quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno);
-        //returnNumbers.at(functionScopeCount)++;
-        //returnStack.push(quads->nextQuad());
-        //quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        returnNumbers.at(functionScopeCount)++;
+        returnStack.push(quads->nextQuad());
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
     ;
 

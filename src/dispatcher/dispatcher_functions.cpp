@@ -34,9 +34,9 @@ extern void execute_call (instruction* instr) {
     }
 }
 
-extern userfunc* avm_get_func_info(unsigned pc) {
-    if (userFuncs.at(pc)->address == pc) {
-        return userFuncs.at(pc);
+extern userfunc* avm_get_func_info(unsigned i) {
+    if (userFuncs.at(i)->address == pc) {
+        return userFuncs.at(i);
     }
     return nullptr;
 }
@@ -44,10 +44,10 @@ extern userfunc* avm_get_func_info(unsigned pc) {
 extern void execute_funcenter (instruction* instr) {
     avm_memcell* func = avm_translate_operand(&instr->result, &ax);
     assert(func);
-    assert(pc == func->data.funcVal);
+    assert(pc == userFuncs.at(func->data.funcVal)->address);
 
     totalActuals = 0;
-    userfunc* funcInfo = avm_get_func_info(pc);
+    userfunc* funcInfo = avm_get_func_info(func->data.funcVal);
     topsp = top;
     top = top - funcInfo->localSize;
 }

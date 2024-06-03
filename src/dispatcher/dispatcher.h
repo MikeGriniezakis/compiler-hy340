@@ -34,6 +34,7 @@ inline double sub_impl(double x, double y) { return x-y;};
 inline double mul_impl(double x, double y) { return x*y;};
 inline double div_impl(double x, double y) { return x/y;};
 inline double mod_impl(double x, double y) { return (unsigned) x % (unsigned) y;};
+inline double uminus_impl(double x, double y) { return x * -1;};
 
 typedef double (*arithmetic_func_t)(double x, double y);
 inline arithmetic_func_t arithmeticFuncs[] = {
@@ -41,7 +42,8 @@ inline arithmetic_func_t arithmeticFuncs[] = {
         sub_impl,
         mul_impl,
         div_impl,
-        mod_impl
+        mod_impl,
+        uminus_impl
 };
 
 extern void execute_add (instruction*);
@@ -49,12 +51,14 @@ extern void execute_sub (instruction*);
 extern void execute_mul (instruction*);
 extern void execute_div (instruction*);
 extern void execute_mod (instruction*);
+extern void execute_uminus (instruction*);
 
 #define execute_add execute_arithmetic
 #define execute_sub execute_arithmetic
 #define execute_mul execute_arithmetic
 #define execute_div execute_arithmetic
 #define execute_mod execute_arithmetic
+#define execute_uminus execute_arithmetic
 
 extern void execute_arithmetic(instruction* instr);
 

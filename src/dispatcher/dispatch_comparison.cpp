@@ -79,7 +79,6 @@ extern void execute_jne(instruction* input) {
         pc = input->result.val;
 }
 
-void execute_uminus(instruction* instr)  {}
 void execute_and(instruction* instr)     {}
 void execute_or(instruction* instr)      {}
 void execute_not(instruction* instr)     {}

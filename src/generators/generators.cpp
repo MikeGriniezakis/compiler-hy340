@@ -203,6 +203,7 @@ extern void generate_FUNCSTART(Quad* quad, VirtualMachine* vm) {
 
     auto t = new instruction();
     t->opcode = funcenter_v;
+    inFuncStart = true;
     vm->makeOperand(quad->getResult(), &t->result);
     vm->emit(t);
 }

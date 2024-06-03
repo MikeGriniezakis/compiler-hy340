@@ -45,6 +45,7 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
         }
         case constbool_e:
             arg->val = expr->boolConst;
+            arg->type = bool_a;
             break;
         case conststring_e:
             arg->val = consts_newstring(expr->strConst);
@@ -61,7 +62,18 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
             arg->type = userfunc_a;
             // TODO: is there any case where it is not needed?
             // expr->symbol->tAddress++;
-            arg->val = userfuncs_newfunc(expr->symbol);
+            if (inFuncStart) {
+                arg->val = userfuncs_newfunc(expr->symbol);
+                inFuncStart = false;
+            } else {
+                for (int i = 0; i < userFuncs.size(); i++) {
+                    auto* f = userFuncs.at(i);
+                    if (strcmp(f->id, expr->symbol->name) == 0) {
+                        arg->val = i;
+                        break;
+                    }
+                }
+            }
             break;
         case libraryfunc_e:
             arg->type = libfunc_a;
@@ -106,7 +118,7 @@ unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
     userfunc->localSize = sym->localSize;
     userfunc->id = sym->name;
     this->userFuncs.push_back(userfunc);
-    return userfunc->address;
+    return this->userFuncs.size() - 1;
 }
 
 userfunc* VirtualMachine::userfuncs_getfunc(bool pop) {

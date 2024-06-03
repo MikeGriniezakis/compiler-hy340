@@ -8,6 +8,7 @@
 #include "src/targetCode/targetCode.h"
 
 inline unsigned currentQuad = 0;
+inline bool inFuncStart = false;
 
 extern void generate_ADD(Quad* quad, VirtualMachine* vm);
 
