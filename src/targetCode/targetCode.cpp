@@ -11,7 +11,6 @@
 #include <sstream>
 #include <unistd.h>
 
-#include "../../../../../../usr/include/stdint.h"
 #include "src/generators/generators.h"
 
 void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
@@ -60,6 +59,8 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
             break;
         case programfunc_e:
             arg->type = userfunc_a;
+            // TODO: is there any case where it is not needed?
+            // expr->symbol->tAddress++;
             arg->val = userfuncs_newfunc(expr->symbol);
             break;
         case libraryfunc_e:
@@ -105,7 +106,7 @@ unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
     userfunc->localSize = sym->localSize;
     userfunc->id = sym->name;
     this->userFuncs.push_back(userfunc);
-    return this->userFuncs.size() - 1;
+    return userfunc->address;
 }
 
 userfunc* VirtualMachine::userfuncs_getfunc(bool pop) {
@@ -138,6 +139,7 @@ void VirtualMachine::patchIncompleteJumps() {
 void VirtualMachine::generate() {
     for (auto quad: this->quads->getQuads()) {
         (*generators[quad->getCode()])(quad, this);
+        currentQuad++;
     }
 
     this->patchIncompleteJumps();

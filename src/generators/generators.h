@@ -7,6 +7,8 @@
 #include "src/quads/Quads.h"
 #include "src/targetCode/targetCode.h"
 
+inline unsigned currentQuad = 0;
+
 extern void generate_ADD(Quad* quad, VirtualMachine* vm);
 
 extern void generate_SUB(Quad* quad, VirtualMachine* vm);

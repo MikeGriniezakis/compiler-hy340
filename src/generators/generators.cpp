@@ -20,7 +20,7 @@ void generate_relational(vmopcode op, Quad* quad, VirtualMachine* vm) {
     vm->makeOperand(quad->getArg2(), &t->arg2);
 
     t->result.type = label_a;
-    if (quad->getLabel() < vm->getCurrentQuad())
+    if (quad->getLabel() < currentQuad)
         t->result.val = vm->getQuadTAddress(quad->getLabel());
     else
         vm->addIncompleteJump(vm->nextInstructionLabel(), quad->getLabel());

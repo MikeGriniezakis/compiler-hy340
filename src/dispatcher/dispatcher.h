@@ -113,6 +113,7 @@ extern void execute_newtable (instruction*);
 extern void execute_tablegetelem (instruction*);
 extern void execute_tablesetelem (instruction*);
 extern void execute_nop (instruction*);
+extern void execute_jump (instruction*);
 
 inline execute_func_t executeFuncs[] = {
         execute_assign,
@@ -139,6 +140,7 @@ inline execute_func_t executeFuncs[] = {
         execute_tablegetelem,
         execute_tablesetelem,
         execute_nop,
+        execute_jump,
 };
 
 extern void execute_cycle();

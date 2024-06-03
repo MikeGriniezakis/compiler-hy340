@@ -84,3 +84,6 @@ void execute_and(instruction* instr)     {}
 void execute_or(instruction* instr)      {}
 void execute_not(instruction* instr)     {}
 void execute_nop(instruction*) {};
+void execute_jump(instruction* instr) {
+    pc = instr->result.val;
+}

@@ -33,8 +33,10 @@
     std::vector<char*> errors;
     std::vector<int> contNumbers = {0};
     std::vector<int> breakNumbers = {0};
+    std::vector<int> returnNumbers = {0};
     std::stack<int> breakStack;
     std::stack<int> contStack;
+    std::stack<int> returnStack;
 
     void insertToken(struct SymbolStruct* symbol, bool isArgument, bool insert) {
         if (symbolTable->isNameReserved(symbol->name)) {
@@ -936,7 +938,15 @@ block:
     ;
 
 funcdef:
-    FUNCTION { functionScopeCount++; inFunction = true; } PAREN_OPEN {
+    FUNCTION {
+        functionScopeCount++;
+        if (returnNumbers.size()-1 < functionScopeCount) {
+            returnNumbers.push_back(0);
+        }
+        inFunction = true;
+        $<intValue>1 = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    } PAREN_OPEN {
         Symbol* symbol = symbolTable->insertSymbol("$" + std::to_string(functionCount++), yylineno, true, false, functionScopeCount);
         $<expr>$ = quads->newExpr(programfunc_e);
         $<expr>$->symbol = symbol->toStruct();
@@ -946,14 +956,29 @@ funcdef:
         symbolTable->enterScopeSpace();
         symbolTable->resetFormalScope();
     } idlist PAREN_CLOSE block {
+        for (int i = 0; i < returnNumbers.at(functionScopeCount); i++) {
+            quads->patchLabel(returnStack.top(), quads->nextQuad());
+            returnStack.pop();
+        }
         quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+        returnNumbers.at(functionScopeCount) = 0;
         functionScopeCount--;
         $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
+        quads->patchLabel($<intValue>1, quads->nextQuad());
         symbolTable->exitScopeSpace();
         inFunction = false;
     } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
-    | FUNCTION { functionScopeCount++; isFunction = true; inFunction = true; } ID
-     {
+    | FUNCTION {
+        functionScopeCount++;
+        if (returnNumbers.size()-1 < functionScopeCount) {
+            returnNumbers.push_back(0);
+        }
+        isFunction = true;
+        inFunction = true;
+        $<intValue>1 = quads->nextQuad();
+        quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
+    ID {
          Symbol* symbol = symbolTable->lookupSymbolScoped($3);
 
          if (symbolTable->isNameReserved($3)) {
@@ -988,9 +1013,15 @@ funcdef:
          symbolTable->enterScopeSpace();
          symbolTable->resetFormalScope();
      } idlist PAREN_CLOSE block {
-         functionScopeCount--;
+         for (int i = 0; i < returnNumbers.at(functionScopeCount); i++) {
+             quads->patchLabel(returnStack.top(), quads->nextQuad());
+             returnStack.pop();
+         }
          quads->emit(funcend_op, $<expr>4, nullptr, nullptr, 0, yylineno);
+         returnNumbers.at(functionScopeCount) = 0;
+         functionScopeCount--;
          $<expr>4->symbol->localSize = symbolTable->currScopeOffset();
+         quads->patchLabel($<intValue>1, quads->nextQuad());
          symbolTable->exitScopeSpace();
          inFunction = false;
      } { printf("[FUNCDEF] found function(idlist){} at line %d\n", yylineno); $$ = $<expr>4; }
@@ -1226,13 +1257,23 @@ returnstmt:
         }
     } expr SEMICOLON {
         quads->emit(ret_op, nullptr, $3, nullptr, 0, yylineno);
+        // TODO: enable and fix
+        //returnNumbers.at(functionScopeCount)++;
+        //returnStack.push(quads->nextQuad());
+        //quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
         printf("[RETURNSTMT] found return expr; at line %d\n", yylineno);
     }
     | RETURN {
         if (functionScopeCount == 0 || inLoop == true) {
             yyerror("Return must be used inside a function");
         }
-    } SEMICOLON { printf("[RETURNSTMT] found return; at line %d\n", yylineno); quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno); }
+    } SEMICOLON {
+        printf("[RETURNSTMT] found return; at line %d\n", yylineno);
+        quads->emit(ret_op, nullptr, nullptr, nullptr, 0, yylineno);
+        //returnNumbers.at(functionScopeCount)++;
+        //returnStack.push(quads->nextQuad());
+        //quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+    }
     ;
 
 %%

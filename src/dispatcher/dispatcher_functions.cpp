@@ -53,7 +53,7 @@ extern void execute_funcenter (instruction* instr) {
 }
 
 extern void execute_funcexit (instruction* instr) {
-    if (avm_stack.at(restorePc).type != call_v) {
+    if (instructions.at(restorePc)->opcode != call_v) {
         return;
     }
 
