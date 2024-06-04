@@ -1119,7 +1119,7 @@ whilestmt:
         printf("[WHILESTMT] found while (expr) stmts at line %d\n", yylineno);
 
         for (int i = 0; i < contNumbers.at(loopScopeCount); i++) {
-            quads->patchLabel(contStack.top(), $3-1);
+            quads->patchLabel(contStack.top(), $1);
             contStack.pop();
         }
         contNumbers.at(loopScopeCount) = 0;

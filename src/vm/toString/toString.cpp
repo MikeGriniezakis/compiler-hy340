@@ -23,25 +23,25 @@ extern char* string_tostring(avm_memcell* m) {
 }
 
 extern char* bool_tostring(avm_memcell* m) {
-    return const_cast<char*>(m->data.boolVal ? "TRUE" : "FALSE");
+    return strdup(m->data.boolVal ? "TRUE" : "FALSE");
 }
 
 extern char* table_tostring(avm_memcell* m) {
-    return "";
+    return strdup("");
 }
 
 extern char* userfunc_tostring(avm_memcell* m) {
-    return "";
+    return strdup("");
 }
 
 extern char* libfunc_tostring(avm_memcell* m) {
-    return "";
+    return strdup("");
 }
 
 extern char* nil_tostring(avm_memcell* m) {
-    return "";
+    return strdup("");
 }
 
 extern char* undef_tostring(avm_memcell* m) {
-    return "undefined";
+    return strdup("undefined");
 }
