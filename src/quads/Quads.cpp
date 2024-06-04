@@ -156,6 +156,14 @@ SymbolStruct* Quads::createTemp() {
         temp->offset = symbol->getOffset();
         temp->scope = symbol->getScope();
         temp->scope_space = symbol->getScopeSpace();
+        temp->type = symbol->getType();
+        temp->symbol_class = symbol->getSymbolClass();
+    } else {
+        temp->offset = existingSymbol->getOffset();
+        temp->scope = existingSymbol->getScope();
+        temp->scope_space = existingSymbol->getScopeSpace();
+        temp->type = existingSymbol->getType();
+        temp->symbol_class = existingSymbol->getSymbolClass();
     }
 
     return temp;

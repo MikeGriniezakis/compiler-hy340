@@ -18,7 +18,7 @@ extern void execute_comparison(instruction* instr) {
         fprintf(stderr, "Non numeric value used in comparison!");
         executionFinished = true;
     } else {
-        auto op = comparisonFuncs[instr->opcode - jle_v];
+        auto op = comparisonFuncs[instr->opcode - jeq_v];
         int result = (*op)(arg1->data.numVal, arg2->data.numVal);
 
         if (!executionFinished && result) {

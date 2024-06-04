@@ -72,6 +72,7 @@
                 symbol->symbol_class = savedSymbol->getSymbolClass();
                 symbol->scope = savedSymbol->getScope();
                 symbol->type = savedSymbol->getType();
+                symbol->scope_space = savedSymbol->getScopeSpace();
             }
             isFunction = false;
             return;
@@ -88,6 +89,7 @@
                     symbol->symbol_class = savedSymbol->getSymbolClass();
                     symbol->scope = savedSymbol->getScope();
                     symbol->type = savedSymbol->getType();
+                    symbol->scope_space = savedSymbol->getScopeSpace();
                 }
                 isFunction = false;
                 break;
@@ -1162,7 +1164,7 @@ whilecond:
         quads->emit(jump_op, nullptr, nullptr, nullptr, quads->nextQuad() + 2, yylineno);
         quads->emit(assign_op, evaluatedShortCircuit, falseExpr, nullptr, 0, yylineno);
 
-        quads->emit(if_eq_op, evaluatedShortCircuit, trueExpr, nullptr, quads->nextQuad() + 2, yylineno);
+        quads->emit(if_eq_op, nullptr, evaluatedShortCircuit, trueExpr, quads->nextQuad() + 2, yylineno);
         $$ = quads->nextQuad();
         quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
     }
@@ -1230,7 +1232,7 @@ forprefix:
         quads->emit(assign_op, evaluatedShortCircuit, falseExpr, nullptr, 0, yylineno);
 
         $$->enter = quads->nextQuad();
-        quads->emit(if_eq_op, evaluatedShortCircuit, trueExpr, nullptr, $6, yylineno);
+        quads->emit(if_eq_op, nullptr, evaluatedShortCircuit, trueExpr, $6, yylineno);
     }
     ;
 
