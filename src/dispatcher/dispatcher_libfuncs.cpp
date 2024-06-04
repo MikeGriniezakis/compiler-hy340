@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "dispatcher.h"
+#include "src/vm/memory/memory.h"
 #include "src/vm/toString/toString.h"
 
 extern void libfunc_print() {
@@ -47,8 +48,29 @@ extern void libfunc_print() {
     }
 }
 
+extern void libfunc_typeof() {
+    unsigned n = avm_totalactuals();
+    if (n != 1) {
+        // avm_error("one argument (not %d) expected in 'typeof'!", n);
+        fprintf(stderr, "one argument (not %d) expected in 'typeof'!", n);
+        executionFinished = true;
+    } else {
+        avm_memcellclear(&retval);
+        retval.type = string_m;
+        retval.data.strVal = strdup(typeString[avm_getactual(0)->type]);
+    }
+}
+
 extern void avm_registerlibfunc(char* id, library_func_t addr) {
-    avm_stack[AVM_STACKSIZE - 1].type = libfunc_m;
-    avm_stack[AVM_STACKSIZE - 1].data.libfuncVal = strdup(id);
-    libFuncs[id] = addr;
+    unsigned i = 1;
+    while (true) {
+        if (avm_stack[AVM_STACKSIZE - i].type == undef_m) {
+            avm_stack[AVM_STACKSIZE - 1].type = libfunc_m;
+            avm_stack[AVM_STACKSIZE - 1].data.libfuncVal = strdup(id);
+            libFuncs[id] = addr;
+            break;
+        }
+
+        i++;
+    }
 }

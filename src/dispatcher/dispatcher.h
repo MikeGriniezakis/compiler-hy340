@@ -111,6 +111,7 @@ extern userfunc* avm_get_func_info(unsigned pc);
 extern unsigned avm_totalactuals();
 extern avm_memcell* avm_getactual(unsigned i);
 extern void libfunc_print();
+extern void libfunc_typeof();
 extern void avm_registerlibfunc(char* id, library_func_t addr);
 
 extern void execute_newtable (instruction*);
