@@ -16,9 +16,9 @@ char* avm_to_string(avm_memcell* m) {
 }
 
 extern char* number_tostring(avm_memcell* m) {
-    char output[18];
-    sprintf(output,"%G", m->data.numVal);
-    return strdup(output);
+    std::stringstream ss;
+    ss << m->data.numVal;
+    return strdup(ss.str().c_str());
 }
 
 extern char* string_tostring(avm_memcell* m) {
@@ -31,19 +31,22 @@ extern char* bool_tostring(avm_memcell* m) {
 
 extern char* table_tostring(avm_memcell* m) {
     std::stringstream ss;
+    ss << "[";
     for (unsigned i = 0; i < AVM_TABLE_HASHSIZE; i++) {
         avm_table_bucket* numStart = m->data.tableVal->numIndexed[i];
         avm_table_bucket* strStart = m->data.tableVal->strIndexed[i];
 
         while (numStart) {
-            ss << "{key: " << numStart->key.data.numVal << ", value: " << avm_to_string(&numStart->value) << "}\n";
+            ss << avm_to_string(&numStart->value);
             numStart = numStart->next;
+
         }
         while (strStart) {
-            ss << "{key: " << strStart->key.data.numVal << ", value: " << avm_to_string(&strStart->value) << "}\n";
+            ss << avm_to_string(&strStart->value);
             strStart = strStart->next;
         }
     }
+    ss << "]";
 
     return strdup(ss.str().c_str());
 }

@@ -30,16 +30,14 @@ extern void execute_tablegetelem(instruction* instr) {
     lv->type = nil_m;
 
     if (t->type != table_m) {
-        fprintf(stderr, "illegal use of type %s as table!", typeString[t->type]);
+        fprintf(stderr, "illegal use of type %s as table!\n", typeString[t->type]);
     } else {
         avm_memcell* content = avm_table_get_elem(t->data.tableVal, i);
         if (content) {
             avm_assign(lv, content);
         } else {
-            char* ts = avm_to_string(t);
             char* is = avm_to_string(i);
-            fprintf(stderr, "tablegetelem: %s[%s] not found!", ts, is);
-            free(ts);
+            fprintf(stderr, "tablegetelem: [%s] not found!\n", is);
             free(is);
         }
     }
@@ -51,7 +49,7 @@ extern void execute_tablesetelem(instruction* instr) {
     avm_memcell* c = avm_translate_operand(&instr->arg2, &bx);
 
     if (t->type != table_m) {
-        fprintf(stderr, "illegal use of type %s as table!", typeString[t->type]);
+        fprintf(stderr, "illegal use of type %s as table!\n", typeString[t->type]);
     } else {
         avm_table_set_elem(t->data.tableVal, i, c);
     }

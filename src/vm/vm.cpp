@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <unistd.h>
 
 #include "memory/memory.h"
@@ -96,9 +97,17 @@ extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
     if (key->type == string_m) {
         int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
 
+        char* cmp = key->data.strVal;
+
+        if (cmp[0] != '"') {
+            std::stringstream ss;
+            ss << "\"" << cmp << "\"";
+            cmp = strdup(ss.str().c_str());
+        }
+
         avm_table_bucket* start = table->strIndexed[hash];
         while (start != nullptr) {
-            if (start->key.data.numVal == key->data.numVal) {
+            if (strcmp(start->key.data.strVal, cmp) == 0) {
                 return &start->value;
             }
             start = start->next;
@@ -139,6 +148,15 @@ extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* 
 
     if (key->type == string_m) {
         int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
+
+        char* keyStr = key->data.strVal;
+
+        if (keyStr[0] != '"') {
+            std::stringstream ss;
+            ss << "\"" << keyStr << "\"";
+            free(key->data.strVal);
+            key->data.strVal = strdup(ss.str().c_str());
+        }
 
         auto* newBucket = new avm_table_bucket();
         newBucket->key = *key;

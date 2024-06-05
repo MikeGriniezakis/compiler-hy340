@@ -35,13 +35,13 @@ extern void execute_jeq(instruction* input) {
 
     unsigned char result = 0;
     if (arg1->type == undef_m || arg2->type == undef_m) {
-        fprintf(stderr, "comparison with undefined opperand!");
+        fprintf(stderr, "comparison with undefined opperand!\n");
     } else if (arg1->type == nil_m || arg2->type == nil_m) {
-        result = arg1->type == nil_m && arg1->type == nil_m;
+        result = arg1->type == nil_m && arg2->type == nil_m;
     } else if (arg1->type == bool_m || arg2->type == bool_m) {
         result = avm_to_bool(arg1) == avm_to_bool(arg2);
     } else if (arg1->type != arg2->type) {
-        fprintf(stderr, "comparison between %s and %s is illegal!", typeString[arg1->type], typeString[arg2->type]);
+        fprintf(stderr, "comparison between %s and %s is illegal!\n", typeString[arg1->type], typeString[arg2->type]);
     } else if (arg1->type == number_m && arg2->type == number_m) {
         result = arg1->data.numVal == arg2->data.numVal;
     } else {
@@ -68,7 +68,7 @@ extern void execute_jne(instruction* input) {
     else if (arg1->type == bool_m || arg2->type == bool_m)
         result = avm_to_bool(arg1) != avm_to_bool(arg2);
     else if (arg1->type != arg2->type)
-        fprintf(stderr, "comparison between %s and %s is illegal!", typeString[arg1->type],
+        fprintf(stderr, "comparison between %s and %s is illegal!\n", typeString[arg1->type],
                 typeString[arg2->type]);
     else if (arg1->type == number_m && arg2->type == number_m)
         result = arg1->data.numVal != arg2->data.numVal;

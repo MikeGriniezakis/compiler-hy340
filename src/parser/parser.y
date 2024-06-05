@@ -757,8 +757,14 @@ lvalue:
         symbolStruct->line = yylineno;
         symbolStruct->type = GLOBAL;
 
+        Symbol* existingSymbol = symbolTable->lookupSymbolGlobal($2);
         $$ = quads->newExpr(var_e);
-        $$->symbol = symbolStruct;
+
+        if (existingSymbol == nullptr)
+            $$->symbol = symbolStruct;
+        else {
+            $$->symbol = existingSymbol->toStruct();
+        }
 
         printf("[LVALUE] found NAMESPACE ID at line %d\n", yylineno);
     }
@@ -1078,6 +1084,13 @@ ifprefix:
 
         expr* evaluatedShortCircuit = quads->newExpr(boolexpr_e);
         evaluatedShortCircuit->symbol = quads->createTemp();
+
+        if ($3->type != boolexpr_e) {
+            $3->trueList.push_back(quads->nextQuad());
+            $3->falseList.push_back(quads->nextQuad() + 1);
+            quads->emit(if_eq_op, nullptr, $3, trueExpr, quads->nextQuad() + 2, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, 0, yylineno);
+        }
 
         for (int quad : $3->trueList) {
             quads->patchLabel(quad, quads->nextQuad());

@@ -17,7 +17,7 @@ extern void execute_arithmetic(instruction* instr) {
 
     if (rv1->type != number_m || rv2->type != number_m) {
         // avm_error("not a number in arithmetic!");
-        fprintf(stderr, "not a number in arithmetic!");
+        fprintf(stderr, "not a number in arithmetic!\n");
         executionFinished = true;
     } else {
         arithmetic_func_t op = arithmeticFuncs[instr->opcode - add_v];
