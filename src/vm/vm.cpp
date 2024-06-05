@@ -79,11 +79,89 @@ void avm_dec_top() {
 
 
 extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
+    if (key->type == number_m) {
+        int hash = (int) key->data.numVal % AVM_TABLE_HASHSIZE;
+
+        avm_table_bucket* start = table->numIndexed[hash];
+        while (start != nullptr) {
+            if (start->key.data.numVal == key->data.numVal) {
+                return &start->value;
+            }
+            start = start->next;
+        }
+
+        return nullptr;
+    }
+
+    if (key->type == string_m) {
+        int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
+
+        avm_table_bucket* start = table->strIndexed[hash];
+        while (start != nullptr) {
+            if (start->key.data.numVal == key->data.numVal) {
+                return &start->value;
+            }
+            start = start->next;
+        }
+
+        return nullptr;
+    }
+
     return nullptr;
 }
 
-extern avm_memcell* avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value) {
-    return nullptr;
+extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value) {
+    if (key->type == number_m) {
+        int hash = (int) key->data.numVal % AVM_TABLE_HASHSIZE;
+
+        auto* newBucket = new avm_table_bucket();
+        newBucket->key = *key;
+        newBucket->value = *value;
+        newBucket->next = nullptr;
+
+        if (table->numIndexed[hash] == nullptr) {
+            table->numIndexed[hash] = newBucket;
+            return;
+        }
+
+        avm_table_bucket* start = table->numIndexed[hash];
+        while (start->next != nullptr) {
+            if (start->key.data.numVal == key->data.numVal) {
+                start->value = *value;
+                return;
+            }
+            start = start->next;
+        }
+
+        start->next = newBucket;
+        table->total++;
+    }
+
+    if (key->type == string_m) {
+        int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
+
+        auto* newBucket = new avm_table_bucket();
+        newBucket->key = *key;
+        newBucket->value = *value;
+        newBucket->next = nullptr;
+
+        if (table->strIndexed[hash] == nullptr) {
+            table->strIndexed[hash] = newBucket;
+            return;
+        }
+
+        avm_table_bucket* start = table->strIndexed[hash];
+        while (start->next != nullptr) {
+            if (strcmp(start->key.data.strVal, key->data.strVal) == 0) {
+                start->value = *value;
+                return;
+            }
+            start = start->next;
+        }
+
+        start->next = newBucket;
+        table->total++;
+    }
 }
 
 void readBinaryFile() {

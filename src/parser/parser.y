@@ -202,7 +202,7 @@ stmts:
 
 stmt:
     expr SEMICOLON {
-        quads->resetTempCounter();
+        //quads->resetTempCounter();
         printf("[STMT] found expr; at line %d\n", yylineno);
     }
     | ifstmt { printf("[STMT] found ifstmt at line %d\n", yylineno); }

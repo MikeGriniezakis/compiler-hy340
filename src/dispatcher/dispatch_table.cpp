@@ -22,6 +22,10 @@ extern void execute_tablegetelem(instruction* instr) {
     avm_memcell* t = avm_translate_operand(&instr->arg1, (avm_memcell *) nullptr);
     avm_memcell* i = avm_translate_operand(&instr->arg2, &ax);
 
+    assert(lv && (&avm_stack[AVM_STACKSIZE - 1]) >= lv && lv > &avm_stack[top] || lv == &retval);
+    assert(t && (&avm_stack[AVM_STACKSIZE - 1]) >= t && t > &avm_stack[top]);
+    assert(i);
+
     avm_memcellclear(lv);
     lv->type = nil_m;
 

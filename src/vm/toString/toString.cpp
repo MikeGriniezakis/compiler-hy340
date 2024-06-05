@@ -6,6 +6,9 @@
 
 #include <cassert>
 #include <cstring>
+#include <sstream>
+
+#include "src/dispatcher/dispatcher.h"
 
 char* avm_to_string(avm_memcell* m) {
     assert(m->type >= 0 && m->type <= undef_m);
@@ -27,19 +30,34 @@ extern char* bool_tostring(avm_memcell* m) {
 }
 
 extern char* table_tostring(avm_memcell* m) {
-    return strdup("");
+    std::stringstream ss;
+    for (unsigned i = 0; i < AVM_TABLE_HASHSIZE; i++) {
+        avm_table_bucket* numStart = m->data.tableVal->numIndexed[i];
+        avm_table_bucket* strStart = m->data.tableVal->strIndexed[i];
+
+        while (numStart) {
+            ss << "{key: " << numStart->key.data.numVal << ", value: " << avm_to_string(&numStart->value) << "}\n";
+            numStart = numStart->next;
+        }
+        while (strStart) {
+            ss << "{key: " << strStart->key.data.numVal << ", value: " << avm_to_string(&strStart->value) << "}\n";
+            strStart = strStart->next;
+        }
+    }
+
+    return strdup(ss.str().c_str());
 }
 
 extern char* userfunc_tostring(avm_memcell* m) {
-    return strdup("");
+    return strdup(userFuncs.at(m->data.funcVal)->id);
 }
 
 extern char* libfunc_tostring(avm_memcell* m) {
-    return strdup("");
+    return strdup(m->data.libfuncVal);
 }
 
 extern char* nil_tostring(avm_memcell* m) {
-    return strdup("");
+    return strdup("nil");
 }
 
 extern char* undef_tostring(avm_memcell* m) {

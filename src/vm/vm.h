@@ -70,6 +70,6 @@ extern void avm_dec_top();
 
 extern avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg);
 extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key);
-extern avm_memcell* avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value);
+extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value);
 
 #endif //VM_H
