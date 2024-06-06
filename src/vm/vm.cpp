@@ -81,7 +81,7 @@ void avm_dec_top() {
 
 extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
     if (key->type == number_m) {
-        int hash = (int) key->data.numVal % AVM_TABLE_HASHSIZE;
+        const int hash = static_cast<int>(key->data.numVal) % AVM_TABLE_HASHSIZE;
 
         avm_table_bucket* start = table->numIndexed[hash];
         while (start != nullptr) {
@@ -95,8 +95,6 @@ extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
     }
 
     if (key->type == string_m) {
-        int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
-
         char* cmp = key->data.strVal;
 
         if (cmp[0] != '"') {
@@ -104,6 +102,12 @@ extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
             ss << "\"" << cmp << "\"";
             cmp = strdup(ss.str().c_str());
         }
+
+        int strNumRepr = 0;
+        for (int i = 0; i < strlen(cmp); i++) {
+            strNumRepr += cmp[i];
+        }
+        const int hash = strNumRepr % AVM_TABLE_HASHSIZE;
 
         avm_table_bucket* start = table->strIndexed[hash];
         while (start != nullptr) {
@@ -121,7 +125,7 @@ extern avm_memcell* avm_table_get_elem(avm_table* table, avm_memcell* key) {
 
 extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* value) {
     if (key->type == number_m) {
-        int hash = (int) key->data.numVal % AVM_TABLE_HASHSIZE;
+        const int hash = static_cast<int>(key->data.numVal) % AVM_TABLE_HASHSIZE;
 
         auto* newBucket = new avm_table_bucket();
         newBucket->key = *key;
@@ -147,16 +151,19 @@ extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* 
     }
 
     if (key->type == string_m) {
-        int hash = atoi(key->data.strVal) % AVM_TABLE_HASHSIZE;
-
-        char* keyStr = key->data.strVal;
-
+        const char* keyStr = key->data.strVal;
         if (keyStr[0] != '"') {
             std::stringstream ss;
             ss << "\"" << keyStr << "\"";
             free(key->data.strVal);
             key->data.strVal = strdup(ss.str().c_str());
         }
+
+        int strNumRepr = 0;
+        for (int i = 0; i < strlen(key->data.strVal); i++) {
+            strNumRepr += key->data.strVal[i];
+        }
+        const int hash = strNumRepr % AVM_TABLE_HASHSIZE;
 
         auto* newBucket = new avm_table_bucket();
         newBucket->key = *key;
@@ -192,6 +199,11 @@ void readBinaryFile() {
     unsigned magic;
     file.read(reinterpret_cast<char *>(&magic), sizeof(unsigned int));
     file.read(reinterpret_cast<char *>(&globalVarCount), sizeof(unsigned int));
+
+    if (magic != 131655629) {
+        fprintf(stderr, "Magic number is not correct.\n");
+        exit(1);
+    }
 
     unsigned int numConstsSize;
     file.read(reinterpret_cast<char *>(&numConstsSize), sizeof(unsigned int));
@@ -230,7 +242,7 @@ void readBinaryFile() {
     for (unsigned int i = 0; i < userFunctionsSize; ++i) {
         std::string id;
         char c;
-        while (file.read(reinterpret_cast<char *>(&c), sizeof(char)) && c != '\0') {
+        while (file.read(&c, sizeof(char)) && c != '\0') {
             id.push_back(c);
         }
         auto* userfunc = new struct userfunc;
@@ -247,26 +259,24 @@ void readBinaryFile() {
         auto* instruction = new struct instruction;
         file.read(reinterpret_cast<char *>(&instruction->opcode), sizeof(vmopcode));
 
-        unsigned isResultNull;
-        file.read(reinterpret_cast<char *>(&isResultNull), sizeof(unsigned));
-        instruction->result.empty = (isResultNull != 0);
-        if (!isResultNull) {
+        unsigned isNull;
+        file.read(reinterpret_cast<char *>(&isNull), sizeof(unsigned));
+        instruction->result.empty = isNull != 0;
+        if (!isNull) {
             file.read(reinterpret_cast<char *>(&instruction->result.type), sizeof(vmarg_t));
             file.read(reinterpret_cast<char *>(&instruction->result.val), sizeof(unsigned));
         }
 
-        unsigned isArg1Null;
-        file.read(reinterpret_cast<char *>(&isArg1Null), sizeof(unsigned));
-        instruction->arg1.empty = (isArg1Null != 0);
-        if (!isArg1Null) {
+        file.read(reinterpret_cast<char *>(&isNull), sizeof(unsigned));
+        instruction->arg1.empty = isNull != 0;
+        if (!isNull) {
             file.read(reinterpret_cast<char *>(&instruction->arg1.type), sizeof(vmarg_t));
             file.read(reinterpret_cast<char *>(&instruction->arg1.val), sizeof(unsigned));
         }
 
-        unsigned isArg2Null;
-        file.read(reinterpret_cast<char *>(&isArg2Null), sizeof(unsigned));
-        instruction->arg2.empty = (isArg2Null != 0);
-        if (!isArg2Null) {
+        file.read(reinterpret_cast<char *>(&isNull), sizeof(unsigned));
+        instruction->arg2.empty = isNull != 0;
+        if (!isNull) {
             file.read(reinterpret_cast<char *>(&instruction->arg2.type), sizeof(vmarg_t));
             file.read(reinterpret_cast<char *>(&instruction->arg2.val), sizeof(unsigned));
         }

@@ -10,63 +10,63 @@
 inline unsigned currentQuad = 0;
 inline bool inFuncStart = false;
 
-extern void generate_ADD(Quad* quad, VirtualMachine* vm);
+extern void generate_ADD(Quad* quad, TargetCode* vm);
 
-extern void generate_SUB(Quad* quad, VirtualMachine* vm);
+extern void generate_SUB(Quad* quad, TargetCode* vm);
 
-extern void generate_MUL(Quad* quad, VirtualMachine* vm);
+extern void generate_MUL(Quad* quad, TargetCode* vm);
 
-extern void generate_DIV(Quad* quad, VirtualMachine* vm);
+extern void generate_DIV(Quad* quad, TargetCode* vm);
 
-extern void generate_MOD(Quad* quad, VirtualMachine* vm);
+extern void generate_MOD(Quad* quad, TargetCode* vm);
 
-extern void generate_NEWTABLE(Quad* quad, VirtualMachine* vm);
+extern void generate_NEWTABLE(Quad* quad, TargetCode* vm);
 
-extern void generate_TABLEGETELEM(Quad* quad, VirtualMachine* vm);
+extern void generate_TABLEGETELEM(Quad* quad, TargetCode* vm);
 
-extern void generate_TABLESETELEM(Quad* quad, VirtualMachine* vm);
+extern void generate_TABLESETELEM(Quad* quad, TargetCode* vm);
 
-extern void generate_ASSIGN(Quad* quad, VirtualMachine* vm);
+extern void generate_ASSIGN(Quad* quad, TargetCode* vm);
 
-extern void generate_NOP(Quad* quad, VirtualMachine* vm);
+extern void generate_NOP(Quad* quad, TargetCode* vm);
 
-extern void generate_JUMP(Quad* quad, VirtualMachine* vm);
+extern void generate_JUMP(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_EQ(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_EQ(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_NOTEQ(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_NOTEQ(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_GREATER(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_GREATER(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_GREATEREQ(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_GREATEREQ(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_LESS(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_LESS(Quad* quad, TargetCode* vm);
 
-extern void generate_IF_LESSEQ(Quad* quad, VirtualMachine* vm);
+extern void generate_IF_LESSEQ(Quad* quad, TargetCode* vm);
 
-extern void generate_NOT(Quad* quad, VirtualMachine* vm);
+extern void generate_NOT(Quad* quad, TargetCode* vm);
 
-extern void generate_OR(Quad* quad, VirtualMachine* vm);
+extern void generate_OR(Quad* quad, TargetCode* vm);
 
-extern void generate_PARAM(Quad* quad, VirtualMachine* vm);
+extern void generate_PARAM(Quad* quad, TargetCode* vm);
 
-extern void generate_CALL(Quad* quad, VirtualMachine* vm);
+extern void generate_CALL(Quad* quad, TargetCode* vm);
 
-extern void generate_GETRETVAL(Quad* quad, VirtualMachine* vm);
+extern void generate_GETRETVAL(Quad* quad, TargetCode* vm);
 
-extern void generate_FUNCSTART(Quad* quad, VirtualMachine* vm);
+extern void generate_FUNCSTART(Quad* quad, TargetCode* vm);
 
-extern void generate_RETURN(Quad* quad, VirtualMachine* vm);
+extern void generate_RETURN(Quad* quad, TargetCode* vm);
 
-extern void generate_FUNCEND(Quad* quad, VirtualMachine* vm);
+extern void generate_FUNCEND(Quad* quad, TargetCode* vm);
 
-extern void generate_UMINUS(Quad* quad, VirtualMachine* vm);
+extern void generate_UMINUS(Quad* quad, TargetCode* vm);
 
-extern void generate_AND(Quad* quad, VirtualMachine* vm);
+extern void generate_AND(Quad* quad, TargetCode* vm);
 
-extern void generate(Quad* quad, VirtualMachine* vm);
+extern void generate(Quad* quad, TargetCode* vm);
 
-typedef void (*generator_func_t)(Quad* quad, VirtualMachine* vm);
+typedef void (*generator_func_t)(Quad* quad, TargetCode* vm);
 
 inline generator_func_t generators[] = {
     generate_ADD,

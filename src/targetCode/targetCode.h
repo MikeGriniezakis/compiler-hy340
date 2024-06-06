@@ -103,7 +103,7 @@ struct inclomplete_jump {
     inclomplete_jump* next;
 };
 
-class VirtualMachine {
+class TargetCode {
     Quads* quads;
     SymbolTable* symbolTable;
     std::vector<char *> stringConsts;
@@ -114,7 +114,7 @@ class VirtualMachine {
     std::vector<inclomplete_jump *> inclomplete_jumps;
 
 public:
-    explicit VirtualMachine(Quads* quads, SymbolTable* table): quads(quads), symbolTable(table) {
+    explicit TargetCode(Quads* quads, SymbolTable* table): quads(quads), symbolTable(table) {
     };
 
     unsigned consts_newstring(char* str);

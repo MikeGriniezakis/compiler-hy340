@@ -16,7 +16,7 @@
 
     SymbolTable* symbolTable = new SymbolTable();
     Quads* quads = new Quads(symbolTable);
-    VirtualMachine* vm = new VirtualMachine(quads, symbolTable);
+    TargetCode* targetCode = new TargetCode(quads, symbolTable);
 
     int functionCount = 0;
     int functionScopeCount = 0;
@@ -1453,9 +1453,9 @@ int main(int argc, char** argv) {
     quads->printQuads();
     printf("\n\n");
 
-    vm->generate();
-    vm->print();
-    vm->createBinaryFile();
+    targetCode->generate();
+    targetCode->print();
+    targetCode->createBinaryFile();
 
     return 0;
 }

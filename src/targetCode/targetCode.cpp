@@ -13,7 +13,7 @@
 
 #include "src/generators/generators.h"
 
-void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
+void TargetCode::makeOperand(expr* expr, vmarg* arg) {
     if (expr == nullptr) {
         arg->empty = true;
         return;
@@ -81,36 +81,36 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
     }
 }
 
-void VirtualMachine::makeNumberOperand(vmarg* arg, double val) {
+void TargetCode::makeNumberOperand(vmarg* arg, double val) {
     arg->val = consts_newnumber(val);
     arg->type = number_a;
 }
 
-void VirtualMachine::makeBoolOperand(vmarg* arg, unsigned val) {
+void TargetCode::makeBoolOperand(vmarg* arg, unsigned val) {
     arg->type = bool_a;
     arg->val = val;
 }
 
-void VirtualMachine::makeRetvalOperand(vmarg* arg) {
+void TargetCode::makeRetvalOperand(vmarg* arg) {
     arg->type = retval_a;
 }
 
-unsigned VirtualMachine::consts_newstring(char* str) {
+unsigned TargetCode::consts_newstring(char* str) {
     this->stringConsts.push_back(str);
     return this->stringConsts.size() - 1;
 }
 
-unsigned VirtualMachine::libfuncs_newused(char* str) {
+unsigned TargetCode::libfuncs_newused(char* str) {
     this->namedLibfuncs.push_back(str);
     return this->namedLibfuncs.size() - 1;
 }
 
-unsigned VirtualMachine::consts_newnumber(double num) {
+unsigned TargetCode::consts_newnumber(double num) {
     this->numConsts.push_back(num);
     return this->numConsts.size() - 1;
 }
 
-unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
+unsigned TargetCode::userfuncs_newfunc(SymbolStruct* sym) {
     auto* userfunc = new struct userfunc();
     userfunc->address = sym->tAddress;
     userfunc->localSize = sym->localSize;
@@ -120,7 +120,7 @@ unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
     return this->userFuncs.size() - 1;
 }
 
-userfunc* VirtualMachine::userfuncs_getfunc(bool pop) {
+userfunc* TargetCode::userfuncs_getfunc(bool pop) {
     userfunc* sym = this->userFuncs.back();
     if (pop) {
         this->userFuncs.pop_back();
@@ -129,7 +129,7 @@ userfunc* VirtualMachine::userfuncs_getfunc(bool pop) {
 }
 
 
-void VirtualMachine::addIncompleteJump(unsigned istrNo, unsigned iaddress) {
+void TargetCode::addIncompleteJump(unsigned istrNo, unsigned iaddress) {
     auto* newJump = new inclomplete_jump();
     newJump->instrNo = istrNo;
     newJump->iaddress = iaddress;
@@ -137,7 +137,7 @@ void VirtualMachine::addIncompleteJump(unsigned istrNo, unsigned iaddress) {
     this->inclomplete_jumps.push_back(newJump);
 }
 
-void VirtualMachine::patchIncompleteJumps() {
+void TargetCode::patchIncompleteJumps() {
     for (auto jump: this->inclomplete_jumps) {
         if (jump->iaddress == this->instructions.size()) {
             this->instructions[jump->instrNo]->result.val = this->instructions.size();
@@ -147,7 +147,7 @@ void VirtualMachine::patchIncompleteJumps() {
     }
 }
 
-void VirtualMachine::generate() {
+void TargetCode::generate() {
     for (auto quad: this->quads->getQuads()) {
         (*generators[quad->getCode()])(quad, this);
         currentQuad++;
@@ -156,27 +156,27 @@ void VirtualMachine::generate() {
     this->patchIncompleteJumps();
 }
 
-unsigned VirtualMachine::nextInstructionLabel() {
+unsigned TargetCode::nextInstructionLabel() {
     return this->instructions.size();
 }
 
-void VirtualMachine::emit(instruction* instruction) {
+void TargetCode::emit(instruction* instruction) {
     this->instructions.push_back(instruction);
 }
 
-unsigned VirtualMachine::getCurrentQuad() {
+unsigned TargetCode::getCurrentQuad() {
     return this->quads->nextQuad() - 1;
 }
 
-unsigned VirtualMachine::getQuadTAddress(unsigned quadNo) {
+unsigned TargetCode::getQuadTAddress(unsigned quadNo) {
     return this->quads->getQuad(quadNo)->getTAddress();
 }
 
-void VirtualMachine::resetOperand(vmarg* arg) {
+void TargetCode::resetOperand(vmarg* arg) {
     arg->val = 0;
 }
 
-void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
+void TargetCode::printVMArg(std::stringstream* ss, vmarg* arg) {
     if (arg == nullptr || arg->empty) {
         *ss << std::setw(25) << "NULL";
         return;
@@ -225,14 +225,14 @@ void VirtualMachine::printVMArg(std::stringstream* ss, vmarg* arg) {
 }
 
 
-void VirtualMachine::printInstruction(std::stringstream* ss, instruction* instruction) {
+void TargetCode::printInstruction(std::stringstream* ss, instruction* instruction) {
     *ss << std::setw(25) << vmopcodeNames[instruction->opcode].c_str();
     this->printVMArg(ss, &instruction->result);
     this->printVMArg(ss, &instruction->arg1);
     this->printVMArg(ss, &instruction->arg2);
 }
 
-void VirtualMachine::print() {
+void TargetCode::print() {
     std::stringstream ss;
     ss << std::setw(25) << "Instruction#";
     ss << std::setw(25) << "opcode";
@@ -250,78 +250,74 @@ void VirtualMachine::print() {
     ss.clear();
 }
 
-void VirtualMachine::createBinaryFile() {
-    char terminator = '\0';
-
+void TargetCode::createBinaryFile() {
+    constexpr char nullTerminator = '\0';
     FILE *file = fopen("output.bin", "wb");
     if (!file) {
         assert(0);
     }
 
-    unsigned magic = 45823297;
-    fwrite(&magic, sizeof(unsigned int), 1, file);
-    unsigned offset = this->symbolTable->getVarOffset();
-    fwrite(&offset, sizeof(unsigned int), 1, file);
+    constexpr unsigned magic = 131655629;
+    fwrite(&magic, sizeof(unsigned), 1, file);
+    const unsigned offset = this->symbolTable->getVarOffset();
+    fwrite(&offset, sizeof(unsigned), 1, file);
 
-    unsigned int numConstsSize = numConsts.size();
-    fwrite(&(numConstsSize), sizeof(unsigned int), 1, file);
+    const unsigned numConstsSize = numConsts.size();
+    fwrite(&numConstsSize, sizeof(unsigned), 1, file);
     for (double num : numConsts) {
         fwrite(&num, sizeof(double), 1, file);
     }
 
-    unsigned int stringConstsSize = stringConsts.size();
+    const unsigned stringConstsSize = stringConsts.size();
     fwrite(&stringConstsSize, sizeof(unsigned), 1, file);
     for (std::string str: stringConsts) {
         for (char c : str) {
             fwrite(&c, sizeof(char), 1, file);
         }
-        fwrite(&terminator, sizeof(char), 1, file);
+        fwrite(&nullTerminator, sizeof(char), 1, file);
     }
 
-    unsigned int namedLibFunctionsSize = namedLibfuncs.size();
+    const unsigned namedLibFunctionsSize = namedLibfuncs.size();
     fwrite(&namedLibFunctionsSize, sizeof(unsigned), 1, file);
-    for (std::string fun : namedLibfuncs) {
-        for (char c : fun) {
+    for (std::string f : namedLibfuncs) {
+        for (char c : f) {
             fwrite(&c, sizeof(char), 1, file);
         }
-        fwrite(&terminator, sizeof(char), 1, file);
+        fwrite(&nullTerminator, sizeof(char), 1, file);
     }
 
-    unsigned int userFunctionsSize = userFuncs.size();
+    const unsigned userFunctionsSize = userFuncs.size();
     fwrite(&userFunctionsSize, sizeof(unsigned), 1, file);
-    for (userfunc* fun : userFuncs) {
-        std::string id = fun->id;
+    for (const auto f : userFuncs) {
+        std::string id = f->id;
         for (char c : id) {
             fwrite(&c, sizeof(char), 1, file);
         }
-        fwrite(&terminator, sizeof(char), 1, file);
+        fwrite(&nullTerminator, sizeof(char), 1, file);
 
-        fwrite(&fun->address, sizeof(unsigned), 1, file);
-        fwrite(&fun->localSize, sizeof(unsigned), 1, file);
+        fwrite(&f->address, sizeof(unsigned), 1, file);
+        fwrite(&f->localSize, sizeof(unsigned), 1, file);
     }
 
-    unsigned int instructionsSize = instructions.size();
+    const unsigned instructionsSize = instructions.size();
     fwrite(&instructionsSize, sizeof(unsigned), 1, file);
-    for (auto instruction : instructions) {
+    for (const auto instruction : instructions) {
         fwrite(&instruction->opcode, sizeof(vmopcode), 1, file);
 
-        unsigned isResultNull = instruction->result.empty;
-        fwrite(&isResultNull, sizeof(unsigned), 1, file);
+        fwrite(&instruction->result.empty, sizeof(unsigned), 1, file);
         if (!instruction->result.empty) {
             fwrite(&instruction->result.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->result.val, sizeof(unsigned), 1, file);
         }
 
-        unsigned isArg1Null = instruction->arg1.empty;
-        fwrite(&isArg1Null, sizeof(unsigned), 1, file);
-        if (!isArg1Null) {
+        fwrite(&instruction->arg1.empty, sizeof(unsigned), 1, file);
+        if (!instruction->arg1.empty) {
             fwrite(&instruction->arg1.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->arg1.val, sizeof(unsigned), 1, file);
         }
 
-        unsigned isArg2Null = instruction->arg2.empty;
-        fwrite(&isArg2Null, sizeof(unsigned), 1, file);
-        if (!isArg2Null) {
+        fwrite(&instruction->arg2.empty, sizeof(unsigned), 1, file);
+        if (!instruction->arg2.empty) {
             fwrite(&instruction->arg2.type, sizeof(vmarg_t), 1, file);
             fwrite(&instruction->arg2.val, sizeof(unsigned), 1, file);
         }
