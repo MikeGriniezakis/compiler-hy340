@@ -60,15 +60,13 @@ void VirtualMachine::makeOperand(expr* expr, vmarg* arg) {
             break;
         case programfunc_e:
             arg->type = userfunc_a;
-            // TODO: is there any case where it is not needed?
-            // expr->symbol->tAddress++;
             if (inFuncStart) {
                 arg->val = userfuncs_newfunc(expr->symbol);
                 inFuncStart = false;
             } else {
                 for (int i = 0; i < userFuncs.size(); i++) {
                     auto* f = userFuncs.at(i);
-                    if (strcmp(f->id, expr->symbol->name) == 0) {
+                    if (strcmp(f->id, expr->symbol->name) == 0 && f->scope == expr->symbol->scope) {
                         arg->val = i;
                         break;
                     }
@@ -117,6 +115,7 @@ unsigned VirtualMachine::userfuncs_newfunc(SymbolStruct* sym) {
     userfunc->address = sym->tAddress;
     userfunc->localSize = sym->localSize;
     userfunc->id = sym->name;
+    userfunc->scope = sym->scope;
     this->userFuncs.push_back(userfunc);
     return this->userFuncs.size() - 1;
 }

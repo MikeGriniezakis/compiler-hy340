@@ -93,6 +93,7 @@ struct instruction {
 struct userfunc {
     unsigned address;
     unsigned localSize;
+    unsigned scope;
     char* id;
 };
 

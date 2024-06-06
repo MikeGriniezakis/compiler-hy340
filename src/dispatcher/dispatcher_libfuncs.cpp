@@ -12,7 +12,7 @@
 extern void libfunc_print() {
     unsigned n = avm_totalactuals();
 
-    unsigned i = n-1;
+    unsigned i = 0;
     while (true) {
         char* s = avm_to_string(avm_getactual(i));
 
@@ -41,10 +41,10 @@ extern void libfunc_print() {
         }
         free(s);
 
-        if (i == 0) {
+        if (i == n-1) {
             break;
         }
-        i--;
+        i++;
     }
 }
 

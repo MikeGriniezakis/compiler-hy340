@@ -123,6 +123,21 @@
             }
         }
     }
+
+    void reverseLinkedList(expr** head) {
+        expr* prev = nullptr;
+        expr* current = *head;
+        expr* next = nullptr;
+
+        while (current != nullptr) {
+            next = current->next;
+            current->next = prev;
+            prev = current;
+            current = next;
+        }
+
+        *head = prev;
+    }
 %}
 
 %define parse.error verbose
@@ -236,7 +251,9 @@ break:
 
 continue:
     CONTINUE {
-        if (loopScopeCount == 0 || inFunction == true) {
+        if (loopScopeCount == 0) {
+            yyerror("Continue must be used inside a loop");
+        } else if (inFunction && !inLoop) {
             yyerror("Continue must be used inside a loop");
         }
     } SEMICOLON {
@@ -557,7 +574,11 @@ term:
         quads->checkArithmeticExpression($2);
         $$ = quads->newExpr(arithexpr_e);
         $$->symbol = quads->createTemp();
-        quads->emit(uminus_op, $$, $2, nullptr, 0, yylineno);
+
+        expr* uminus = quads->newExpr(constnum_e);
+        uminus->numConst = -1;
+
+        quads->emit(uminus_op, $$, $2, uminus, 0, yylineno);
         printf("[TERM] found -expr at line %d\n", yylineno);
     }
     | NOT expr {
@@ -625,7 +646,7 @@ term:
     | DEC lvalue {
         quads->checkArithmeticExpression($2);
         expr* decExpr = quads->newExpr(constnum_e);
-        decExpr->numConst = -1;
+        decExpr->numConst = 1;
 
         if ($2->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($2, yylineno);
@@ -647,7 +668,7 @@ term:
         $$->symbol = quads->createTemp();
 
         expr* decExpr = quads->newExpr(constnum_e);
-        decExpr->numConst = -1;
+        decExpr->numConst = 1;
 
         if ($1->type == tableitem_e) {
             expr* temp = quads->emitIfTableItem($1, yylineno);
@@ -795,6 +816,7 @@ member:
 
 call:
     call PAREN_OPEN elist PAREN_CLOSE {
+        reverseLinkedList(&$3);
         $$ = quads->makeCall($1, $3, yylineno);
         printf("[CALL] found call(elist) at line %d\n", yylineno);
     }
@@ -805,10 +827,10 @@ call:
             existingSymbol = symbolTable->insertSymbol($1->symbol->name, yylineno, true, false, functionScopeCount);
         } else {
             bool isTemp = existingSymbol->getName().find("_t") != std::string::npos;
-           if (existingSymbol->getFunctionScope() < functionScopeCount && !isMethodCall && !isTemp && existingSymbol->getType() != LIBFUNC) {
-                char message[100];
-                sprintf(message, "function %s not defined", $1->symbol->name);
-                yyerror(message);
+            if (existingSymbol->getFunctionScope() < functionScopeCount && !isMethodCall && !isTemp && existingSymbol->getType() != LIBFUNC) {
+                 char message[100];
+                 sprintf(message, "function %s not defined", $1->symbol->name);
+                 yyerror(message);
             }
             isMethodCall = false;
             $1 = quads->emitIfTableItem($1, yylineno);
@@ -825,6 +847,7 @@ call:
     | PAREN_OPEN funcdef PAREN_CLOSE PAREN_OPEN elist PAREN_CLOSE {
         expr* func = quads->newExpr(programfunc_e);
         func->symbol = $2->symbol;
+        reverseLinkedList(&$5);
         $$ = quads->makeCall(func, $5, yylineno);
         printf("[CALL] found (funcdef)(elist) at line %d\n", yylineno);
     }
@@ -843,6 +866,7 @@ callsuffix:
 
 normcall:
     PAREN_OPEN elist PAREN_CLOSE {
+        reverseLinkedList(&$2);
         $$ = new call();
         $$->elist = $2;
         $$->method = false;
@@ -853,6 +877,7 @@ normcall:
 
 methodcall:
     DOUBLE_DOT ID PAREN_OPEN elist PAREN_CLOSE {
+        reverseLinkedList(&$4);
         $$->elist = $4;
         $$->method = true;
         $$->name = $2;
@@ -876,6 +901,7 @@ elist:
 
 objectdef:
     BRACKET_OPEN elist BRACKET_CLOSE {
+        reverseLinkedList(&$2);
         $$ = quads->newExpr(newtable_e);
         $$->symbol = quads->createTemp();
 
@@ -1185,13 +1211,14 @@ whilecond:
 
 forstmt:
     forprefix N elist PAREN_CLOSE N stmt N {
+        reverseLinkedList(&$3);
         quads->patchLabel($1->enter, $5 + 1);
         quads->patchLabel($2, quads->nextQuad());
         quads->patchLabel($5, $1->test);
         quads->patchLabel($7, $2 + 1);
 
         for (int i = 0; i < contNumbers.at(loopScopeCount); i++) {
-            quads->patchLabel(contStack.top(), $1->test);
+            quads->patchLabel(contStack.top(), $2+1);
             contStack.pop();
         }
         contNumbers.at(loopScopeCount) = 0;
@@ -1221,6 +1248,7 @@ forprefix:
         inLoop = true;
     } PAREN_OPEN elist SEMICOLON M expr SEMICOLON
     {
+        reverseLinkedList(&$4);
         $$ = new struct forStatement();
         $$->test = $6;
 
