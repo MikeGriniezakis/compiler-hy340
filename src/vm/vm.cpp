@@ -189,8 +189,8 @@ extern void avm_table_set_elem(avm_table* table, avm_memcell* key, avm_memcell* 
     }
 }
 
-void readBinaryFile() {
-    std::ifstream file("/home/mikegriniezakis/CLionProjects/hy340/output.bin", std::ios::binary);
+void readBinaryFile(char* path) {
+    std::ifstream file(path, std::ios::binary);
     if (!file) {
         std::cerr << "Failed to open the binary file." << std::endl;
         return;
@@ -311,7 +311,14 @@ void avm_initstack() {
 }
 
 int main(int argc, char* argv[]) {
-    readBinaryFile();
+    char* path;
+    if (argc != 2) {
+        path = strdup("output.bin");
+    } else {
+        path = argv[1];
+    }
+
+    readBinaryFile(path);
     avm_initstack();
 
     while (!executionFinished) {
