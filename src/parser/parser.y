@@ -184,6 +184,7 @@
 %type <expr> call
 %type <expr> objectdef
 %type <expr> indexedelem
+%type <expr> indexedcomma
 %type <expr> indexed
 %type <intValue> ifprefix
 %type <intValue> elseprefix
@@ -411,6 +412,30 @@ expr:
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
+        if ($1->type == boolexpr_e) {
+            int trueQuad = quads->nextQuad();
+            int falseQuad = quads->nextQuad()+2;
+
+            expr* trueExpr = quads->newExpr(constbool_e);
+            trueExpr->boolConst = true;
+
+            expr* falseExpr = quads->newExpr(constbool_e);
+            falseExpr->boolConst = false;
+
+
+            for (int quad : $1->falseList) {
+                quads->patchLabel(quad, falseQuad);
+            }
+
+            for (int quad : $1->trueList) {
+                quads->patchLabel(quad, trueQuad);
+            }
+
+            quads->emit(assign_op, $1, trueExpr, nullptr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, falseQuad + 1, yylineno);
+            quads->emit(assign_op, $1, falseExpr, nullptr, 0, yylineno);
+        }
+
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp();
 
@@ -432,6 +457,30 @@ expr:
             yyerror("Arithmetic expression must be of the same type");
             return -1;
         }
+        if ($1->type == boolexpr_e) {
+            int trueQuad = quads->nextQuad();
+            int falseQuad = quads->nextQuad()+2;
+
+            expr* trueExpr = quads->newExpr(constbool_e);
+            trueExpr->boolConst = true;
+
+            expr* falseExpr = quads->newExpr(constbool_e);
+            falseExpr->boolConst = false;
+
+
+            for (int quad : $1->falseList) {
+                quads->patchLabel(quad, falseQuad);
+            }
+
+            for (int quad : $1->trueList) {
+                quads->patchLabel(quad, trueQuad);
+            }
+
+            quads->emit(assign_op, $1, trueExpr, nullptr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, falseQuad + 1, yylineno);
+            quads->emit(assign_op, $1, falseExpr, nullptr, 0, yylineno);
+        }
+
         $$ = quads->newExpr(boolexpr_e);
         $$->symbol = quads->createTemp();
 
@@ -462,6 +511,29 @@ expr:
         if (!quads->checkArithmeticExpression($1, $5)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
+        }
+        if ($1->type == boolexpr_e) {
+            int trueQuad = quads->nextQuad();
+            int falseQuad = quads->nextQuad()+2;
+
+            expr* trueExpr = quads->newExpr(constbool_e);
+            trueExpr->boolConst = true;
+
+            expr* falseExpr = quads->newExpr(constbool_e);
+            falseExpr->boolConst = false;
+
+
+            for (int quad : $1->falseList) {
+                quads->patchLabel(quad, falseQuad);
+            }
+
+            for (int quad : $1->trueList) {
+                quads->patchLabel(quad, trueQuad);
+            }
+
+            quads->emit(assign_op, $1, trueExpr, nullptr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, falseQuad + 1, yylineno);
+            quads->emit(assign_op, $1, falseExpr, nullptr, 0, yylineno);
         }
 
         expr* trueExpr = quads->newExpr(constbool_e);
@@ -500,6 +572,29 @@ expr:
         if (!quads->checkArithmeticExpression($1, $5)) {
             yyerror("Arithmetic expression must be of the same type");
             return -1;
+        }
+        if ($1->type == boolexpr_e) {
+            int trueQuad = quads->nextQuad();
+            int falseQuad = quads->nextQuad()+2;
+
+            expr* trueExpr = quads->newExpr(constbool_e);
+            trueExpr->boolConst = true;
+
+            expr* falseExpr = quads->newExpr(constbool_e);
+            falseExpr->boolConst = false;
+
+
+            for (int quad : $1->falseList) {
+                quads->patchLabel(quad, falseQuad);
+            }
+
+            for (int quad : $1->trueList) {
+                quads->patchLabel(quad, trueQuad);
+            }
+
+            quads->emit(assign_op, $1, trueExpr, nullptr, 0, yylineno);
+            quads->emit(jump_op, nullptr, nullptr, nullptr, falseQuad + 1, yylineno);
+            quads->emit(assign_op, $1, falseExpr, nullptr, 0, yylineno);
         }
 
         expr* trueExpr = quads->newExpr(constbool_e);
@@ -592,6 +687,7 @@ term:
 
         if ($2->type != boolexpr_e) {
             expr*  boolExpr = quads->newExpr(boolexpr_e);
+            boolExpr->symbol = quads->createTemp();
             $2->trueList.push_back(quads->nextQuad());
             $2->falseList.push_back(quads->nextQuad() + 1);
 
@@ -785,6 +881,12 @@ lvalue:
             $$->symbol = symbolStruct;
         else {
             $$->symbol = existingSymbol->toStruct();
+            if (existingSymbol->getType() == USERFUNC)
+                $$->type = programfunc_e;
+            else if (existingSymbol->getType() == LIBFUNC)
+                $$->type = libraryfunc_e;
+            else
+                $$->type = var_e;
         }
 
         printf("[LVALUE] found NAMESPACE ID at line %d\n", yylineno);
@@ -939,15 +1041,20 @@ objectdef:
     ;
 
 indexed:
-    indexedelem {
+    indexedelem indexedcomma {
         $$ = $1;
-        printf("[INDEXED] found indexedelem at line %d\n", yylineno);
-    }
-    | indexedelem COMMA indexed {
-        $$ = $1;
-        $$->next = $3;
+        $$->next = $2;
         printf("[INDEXED] found indexed, indexedelem at line %d\n", yylineno);
     }
+    ;
+
+indexedcomma:
+    COMMA indexedelem indexedcomma {
+        $$ = $2;
+        $2->next = $3;
+        printf("[INDEXEDMORE] found indexedcomma, indexedelem at line %d\n", yylineno);
+    }
+    | { $$ = nullptr; }
     ;
 
 indexedelem:

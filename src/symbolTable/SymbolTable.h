@@ -15,13 +15,13 @@ class SymbolTable {
     std::vector<std::vector<Symbol*>> scopes;
     std::string libraryFunctions[12] = {
         "print",
+        "typeof",
+        "totalarguments",
+        "argument",
         "input",
         "objectmemberkeys",
         "objecttotalkeys",
         "objectcopy",
-        "totalarguments",
-        "argument",
-        "typeof",
         "strtonum",
         "sqrt",
         "cos",

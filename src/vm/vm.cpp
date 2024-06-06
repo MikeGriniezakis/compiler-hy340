@@ -286,6 +286,10 @@ void avm_initstack() {
         avm_stack.at(i).type = undef_m;
     }
 
+    avm_registerlibfunc("print", libfunc_print);
+    avm_registerlibfunc("typeof", libfunc_typeof);
+    avm_registerlibfunc("totalarguments", libfunc_totalarguments);
+    avm_registerlibfunc("argument", libfunc_argument);
     // avm_registerlibfunc("input", libfunc_input);
     // avm_registerlibfunc("objectmemberkeys", libfunc_objectmemberkeys);
     // avm_registerlibfunc("objectcopy", libfunc_objectcopy);
@@ -294,10 +298,6 @@ void avm_initstack() {
     // avm_registerlibfunc("cos", libfunc_cos);
     // avm_registerlibfunc("sqrt", libfunc_sqrt);
     // avm_registerlibfunc("objecttotalmembers", libfunc_objecttotalmembers);
-    // avm_registerlibfunc("argument", libfunc_argument);
-    // avm_registerlibfunc("totalarguments", libfunc_totalarguments);
-    avm_registerlibfunc("typeof", libfunc_typeof);
-    avm_registerlibfunc("print", libfunc_print);
 }
 
 int main(int argc, char* argv[]) {

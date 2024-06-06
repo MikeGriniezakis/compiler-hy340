@@ -41,7 +41,7 @@ extern void libfunc_print() {
         }
         free(s);
 
-        if (i == n-1) {
+        if (i == n - 1) {
             break;
         }
         i++;
@@ -61,16 +61,71 @@ extern void libfunc_typeof() {
     }
 }
 
-extern void avm_registerlibfunc(char* id, library_func_t addr) {
-    unsigned i = 1;
-    while (true) {
-        if (avm_stack[AVM_STACKSIZE - i].type == undef_m) {
-            avm_stack[AVM_STACKSIZE - 1].type = libfunc_m;
-            avm_stack[AVM_STACKSIZE - 1].data.libfuncVal = strdup(id);
-            libFuncs[id] = addr;
-            break;
-        }
+extern void libfunc_totalarguments() {
+    unsigned p_topsp = avm_get_env_value(topsp + AVM_SAVEDTOPSP_OFFSET);
+    avm_memcellclear(&retval);
 
-        i++;
+    if (!p_topsp) {
+        fprintf(stderr, "'totalarguments' called outside a function!");
+        retval.type = nil_m;
+        return;
+    }
+
+    retval.type = number_m;
+    retval.data.numVal = avm_get_env_value(p_topsp + AVM_NUMACTUALS_OFFSET);
+}
+
+extern void libfunc_argument() {
+    unsigned prev_topsp = avm_get_env_value(topsp + AVM_SAVEDTOPSP_OFFSET);
+    avm_memcellclear(&retval);
+
+    if (!prev_topsp) {
+        fprintf(stderr, "'argument' called outside of function!");
+        retval.type = nil_m;
+        return;
+    }
+    unsigned n = avm_get_env_value(topsp + AVM_NUMACTUALS_OFFSET);
+    if (n < 1) {
+        fprintf(stderr, "exactly one argument expected");
+        return;
+    }
+    avm_memcell* index = avm_getactual(0);
+    unsigned total_actuals = avm_get_env_value(prev_topsp + AVM_NUMACTUALS_OFFSET);
+    if (index->type != number_m)
+        fprintf(stderr, "argument index is not a number!");
+    else if (index->data.numVal < 0 || index->data.numVal > total_actuals)
+        fprintf(stderr, "argument index out of bounds!");
+    else {
+        retval.type = avm_stack[prev_topsp + AVM_STACKENV_SIZE + 1 + static_cast<int>(index->data.numVal)].type;
+        unsigned offset = prev_topsp + AVM_STACKENV_SIZE + 1 + static_cast<int>(index->data.numVal);
+        switch (retval.type) {
+            case number_m:
+                retval.data.numVal = avm_stack[offset].data.numVal;
+                break;
+            case string_m:
+                retval.data.strVal = avm_stack[offset].data.strVal;
+                break;
+            case bool_m:
+                retval.data.boolVal = avm_stack[offset].data.boolVal;
+                break;
+            case table_m:
+                retval.data.tableVal = avm_stack[offset].data.tableVal;
+                break;
+            case userfunc_m:
+                retval.data.funcVal = avm_stack[offset].data.funcVal;
+                break;
+            case libfunc_m:
+                retval.data.libfuncVal = avm_stack[offset].data.libfuncVal;
+                break;
+        }
+    }
+}
+
+extern void avm_registerlibfunc(char* id, library_func_t addr) {
+    unsigned size = libFuncs.size() + 1;
+    if (avm_stack[AVM_STACKSIZE - size].type == undef_m) {
+        avm_stack[AVM_STACKSIZE - size].type = libfunc_m;
+        avm_stack[AVM_STACKSIZE - size].data.libfuncVal = strdup(id);
+        libFuncs[id] = addr;
     }
 }

@@ -112,6 +112,8 @@ extern unsigned avm_totalactuals();
 extern avm_memcell* avm_getactual(unsigned i);
 extern void libfunc_print();
 extern void libfunc_typeof();
+extern void libfunc_totalarguments();
+extern void libfunc_argument();
 extern void avm_registerlibfunc(char* id, library_func_t addr);
 
 extern void execute_newtable (instruction*);

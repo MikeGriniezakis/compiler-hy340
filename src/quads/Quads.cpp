@@ -145,7 +145,7 @@ expr* Quads::makeCall(expr* call, expr* elist, unsigned line) {
 
 
 SymbolStruct* Quads::createTemp() {
-    auto temp = new SymbolStruct();
+    auto* temp = new SymbolStruct();
     char* name = (char *) malloc(10);
     sprintf(name, "_t%d", this->tempCounter++);
     temp->name = strdup(name);
