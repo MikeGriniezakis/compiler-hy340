@@ -84,11 +84,6 @@ extern void libfunc_argument() {
         retval.type = nil_m;
         return;
     }
-    unsigned n = avm_get_env_value(topsp + AVM_NUMACTUALS_OFFSET);
-    if (n < 1) {
-        fprintf(stderr, "exactly one argument expected");
-        return;
-    }
     avm_memcell* index = avm_getactual(0);
     unsigned total_actuals = avm_get_env_value(prev_topsp + AVM_NUMACTUALS_OFFSET);
     if (index->type != number_m)
@@ -96,8 +91,9 @@ extern void libfunc_argument() {
     else if (index->data.numVal < 0 || index->data.numVal > total_actuals)
         fprintf(stderr, "argument index out of bounds!");
     else {
-        retval.type = avm_stack[prev_topsp + AVM_STACKENV_SIZE + 1 + static_cast<int>(index->data.numVal)].type;
         unsigned offset = prev_topsp + AVM_STACKENV_SIZE + 1 + static_cast<int>(index->data.numVal);
+
+        retval.type = avm_stack[offset].type;
         switch (retval.type) {
             case number_m:
                 retval.data.numVal = avm_stack[offset].data.numVal;
