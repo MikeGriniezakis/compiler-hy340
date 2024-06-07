@@ -10,26 +10,26 @@
 
 #include "src/dispatcher/dispatcher.h"
 
-char* avm_to_string(avm_memcell* m) {
+char* avm_to_string(avm_memcell* m, bool inRecursion) {
     assert(m->type >= 0 && m->type <= undef_m);
-    return (*toStringFuncs[m->type])(m);
+    return (*toStringFuncs[m->type])(m, inRecursion);
 }
 
-extern char* number_tostring(avm_memcell* m) {
+extern char* number_tostring(avm_memcell* m, bool inRecursion) {
     std::stringstream ss;
     ss << m->data.numVal;
     return strdup(ss.str().c_str());
 }
 
-extern char* string_tostring(avm_memcell* m) {
+extern char* string_tostring(avm_memcell* m, bool inRecursion) {
     return strdup(m->data.strVal);
 }
 
-extern char* bool_tostring(avm_memcell* m) {
+extern char* bool_tostring(avm_memcell* m, bool inRecursion) {
     return strdup(m->data.boolVal ? "TRUE" : "FALSE");
 }
 
-extern char* table_tostring(avm_memcell* m) {
+extern char* table_tostring(avm_memcell* m, bool inRecursion) {
     std::stringstream ss;
     ss << "[";
     for (unsigned i = 0; i < AVM_TABLE_HASHSIZE; i++) {
@@ -37,12 +37,15 @@ extern char* table_tostring(avm_memcell* m) {
         avm_table_bucket* strStart = m->data.tableVal->strIndexed[i];
 
         while (numStart) {
-            ss << avm_to_string(&numStart->value);
+            if (!inRecursion) {
+                ss << avm_to_string(&numStart->value, true) << ", ";
+            }
             numStart = numStart->next;
-
         }
         while (strStart) {
-            ss << avm_to_string(&strStart->value);
+            if (!inRecursion) {
+                ss << avm_to_string(&strStart->value, true) << ", ";
+            }
             strStart = strStart->next;
         }
     }
@@ -51,18 +54,18 @@ extern char* table_tostring(avm_memcell* m) {
     return strdup(ss.str().c_str());
 }
 
-extern char* userfunc_tostring(avm_memcell* m) {
+extern char* userfunc_tostring(avm_memcell* m, bool inRecursion) {
     return strdup(userFuncs.at(m->data.funcVal)->id);
 }
 
-extern char* libfunc_tostring(avm_memcell* m) {
+extern char* libfunc_tostring(avm_memcell* m, bool inRecursion) {
     return strdup(m->data.libfuncVal);
 }
 
-extern char* nil_tostring(avm_memcell* m) {
+extern char* nil_tostring(avm_memcell* m, bool inRecursion) {
     return strdup("nil");
 }
 
-extern char* undef_tostring(avm_memcell* m) {
+extern char* undef_tostring(avm_memcell* m, bool inRecursion) {
     return strdup("undefined");
 }

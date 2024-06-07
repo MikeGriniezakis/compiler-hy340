@@ -9,8 +9,7 @@
 #include "src/vm/toString/toString.h"
 
 extern void execute_newtable(instruction* instr) {
-    avm_memcell* lv = avm_translate_operand(&instr->result, (avm_memcell *) nullptr);
-    // assert(lv && (avm_stack[N-1]));
+    avm_memcell* lv = avm_translate_operand(&instr->result, nullptr);
     avm_memcellclear(lv);
     lv->type = table_m;
     lv->data.tableVal = new avm_table();
@@ -18,8 +17,8 @@ extern void execute_newtable(instruction* instr) {
 }
 
 extern void execute_tablegetelem(instruction* instr) {
-    avm_memcell* lv = avm_translate_operand(&instr->result, (avm_memcell *) nullptr);
-    avm_memcell* t = avm_translate_operand(&instr->arg1, (avm_memcell *) nullptr);
+    avm_memcell* lv = avm_translate_operand(&instr->result, nullptr);
+    avm_memcell* t = avm_translate_operand(&instr->arg1, nullptr);
     avm_memcell* i = avm_translate_operand(&instr->arg2, &ax);
 
     assert(lv && (&avm_stack[AVM_STACKSIZE - 1]) >= lv && lv > &avm_stack[top] || lv == &retval);
@@ -44,7 +43,7 @@ extern void execute_tablegetelem(instruction* instr) {
 }
 
 extern void execute_tablesetelem(instruction* instr) {
-    avm_memcell* t = avm_translate_operand(&instr->result, (avm_memcell *) nullptr);
+    avm_memcell* t = avm_translate_operand(&instr->result, nullptr);
     avm_memcell* i = avm_translate_operand(&instr->arg1, &ax);
     avm_memcell* c = avm_translate_operand(&instr->arg2, &bx);
 

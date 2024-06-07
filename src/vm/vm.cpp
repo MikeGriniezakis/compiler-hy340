@@ -207,7 +207,6 @@ void readBinaryFile(char* path) {
 
     unsigned int numConstsSize;
     file.read(reinterpret_cast<char *>(&numConstsSize), sizeof(unsigned int));
-
     for (unsigned int i = 0; i < numConstsSize; ++i) {
         double num;
         file.read(reinterpret_cast<char *>(&num), sizeof(double));
@@ -219,7 +218,7 @@ void readBinaryFile(char* path) {
     for (unsigned int i = 0; i < stringConstsSize; ++i) {
         std::string str;
         char c;
-        while (file.read(reinterpret_cast<char *>(&c), sizeof(char)) && c != '\0') {
+        while (file.read(&c, sizeof(char)) && c != '\0') {
             str.push_back(c);
         }
 
@@ -231,7 +230,7 @@ void readBinaryFile(char* path) {
     for (unsigned int i = 0; i < namedLibFunctionsSize; ++i) {
         std::string fun;
         char c;
-        while (file.read(reinterpret_cast<char *>(&c), sizeof(char)) && c != '\0') {
+        while (file.read(&c, sizeof(char)) && c != '\0') {
             fun.push_back(c);
         }
         namedLibfuncs.push_back(strdup(fun.c_str()));

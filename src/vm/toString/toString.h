@@ -6,23 +6,23 @@
 #define TOSTRING_H
 #include "src/vm/vm.h"
 
-typedef char* (*tostring_func_t)(avm_memcell*);
+typedef char* (*tostring_func_t)(avm_memcell*, bool);
 
-extern char* number_tostring(avm_memcell* m);
+extern char* number_tostring(avm_memcell*, bool);
 
-extern char* string_tostring(avm_memcell* m);
+extern char* string_tostring(avm_memcell*, bool);
 
-extern char* bool_tostring(avm_memcell* m);
+extern char* bool_tostring(avm_memcell*, bool);
 
-extern char* table_tostring(avm_memcell* m);
+extern char* table_tostring(avm_memcell*, bool);
 
-extern char* userfunc_tostring(avm_memcell* m);
+extern char* userfunc_tostring(avm_memcell*, bool);
 
-extern char* libfunc_tostring(avm_memcell* m);
+extern char* libfunc_tostring(avm_memcell*, bool);
 
-extern char* nil_tostring(avm_memcell* m);
+extern char* nil_tostring(avm_memcell*, bool);
 
-extern char* undef_tostring(avm_memcell* m);
+extern char* undef_tostring(avm_memcell*, bool);
 
 inline tostring_func_t toStringFuncs[] = {
     number_tostring,
@@ -35,7 +35,7 @@ inline tostring_func_t toStringFuncs[] = {
     undef_tostring
 };
 
-extern char* avm_to_string(avm_memcell* m);
+extern char* avm_to_string(avm_memcell* m, bool inRecursion = false);
 
 inline char* typeString[] = {
     "number",
